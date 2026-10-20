@@ -1,0 +1,22 @@
+# 느린지도 SLOW MAP
+User-agent: *
+Allow: /
+Disallow: /pay/
+
+# 생성형 AI 검색·답변 엔진도 공개 페이지를 읽을 수 있게 허용
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: Yeti
+User-agent: Daumoa
+Allow: /
+Disallow: /pay/
+
+Sitemap: https://specailtourguide.vercel.app/sitemap.xml
