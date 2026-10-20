@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>느린지도 SLOW MAP — 나이와 몸에 맞춘 여행 코스</title>
+  <meta name="description" content="빠른 길 말고 맞는 길로. 연령대별·무장애 여행 코스를 출발부터 도착까지 2D 내비게이션으로 미리 달려보는 여행 가이드">
+  <meta name="theme-color" content="#0f1c18">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="is-loading">
+  <a class="skip" href="#main">본문 바로가기</a>
+
+  <!-- 프리로더 -->
+  <div class="loader" id="loader" aria-hidden="true">
+    <div class="loader__top mono"><span>SLOW MAP</span><span>N 37°33′ · E 126°58′</span></div>
+    <svg class="loader__route" viewBox="0 0 600 200" preserveAspectRatio="none">
+      <path id="loaderPath" d="M10 150 C 90 150 110 40 200 60 S 320 170 400 120 S 520 30 590 50" pathLength="1"/>
+    </svg>
+    <div class="loader__count"><span id="loaderNum">000</span><i>%</i></div>
+    <p class="loader__msg">천천히, 지도를 펼치는 중</p>
+  </div>
+
+  <!-- 커서 · 질감 · 진행바 -->
+  <div class="cursor" id="cursor" aria-hidden="true"><div class="cursor__ring"><span id="cursorLabel"></span></div><div class="cursor__dot"></div></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="progress" id="progress" aria-hidden="true"></div>
+
+  <header class="nav" id="nav">
+    <a class="brand" href="#top" aria-label="느린지도 처음으로" data-cursor="TOP">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M6 31c6-14 12 3 17-10S31 12 34 7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/><circle cx="6" cy="31" r="3.6" fill="currentColor"/><circle cx="34" cy="7" r="3.6" fill="var(--signal)"/></svg>
+      <span class="brand__ko">느린지도</span><span class="brand__en">Slow Map</span>
+    </a>
+    <nav class="nav__links" aria-label="주 메뉴">
+      <a href="#top" data-nav="top"><i class="mono">00</i><span>홈<small>느린지도 소개</small></span></a>
+      <a href="#ages" data-nav="ages"><i class="mono">01</i><span>연령별 코스<small>나이에 맞는 속도</small></span></a>
+      <a href="#access" data-nav="access"><i class="mono">02</i><span>무장애 여행<small>계단 없는 여행</small></span></a>
+      <a href="#sim" data-nav="sim"><i class="mono">03</i><span>내비 시뮬레이터<small>출발부터 도착까지</small></span></a>
+      <a href="#reviews" data-nav="reviews"><i class="mono">04</i><span>여행 리뷰<small>다녀온 사람들의 후기</small></span></a>
+    </nav>
+    <div class="nav__right">
+      <button class="textsize" id="textSize" type="button" aria-pressed="false" title="글자 크게 보기">가<sup>+</sup><span class="sr">글자 크게</span></button>
+      <button class="nav__login" id="navLogin" type="button" data-auth="login">로그인</button>
+      <div class="umenu" id="umenu" hidden>
+        <button class="umenu__btn" id="umenuBtn" type="button" aria-expanded="false" aria-controls="umenuList">
+          <span class="ava" id="umenuAva" aria-hidden="true"></span><span id="umenuName"></span>
+        </button>
+        <div class="umenu__list" id="umenuList" hidden>
+          <p class="umenu__meta mono" id="umenuMeta"></p>
+          <button type="button" data-my-tickets>내 티켓</button>
+          <button type="button" data-my-reviews>내 리뷰 보기</button>
+          <button type="button" data-write-review>리뷰 쓰기</button>
+          <button type="button" data-logout>로그아웃</button>
+        </div>
+      </div>
+      <button class="burger" id="burger" type="button" aria-expanded="false" aria-controls="mnav"><span></span><span></span><span class="sr">메뉴</span></button>
+    </div>
+  </header>
+  <div class="mnav" id="mnav" hidden>
+    <a href="#top" data-nav="top"><i class="mono">00</i>홈</a>
+    <a href="#ages" data-nav="ages"><i class="mono">01</i>연령별 코스</a>
+    <a href="#access" data-nav="access"><i class="mono">02</i>무장애 여행</a>
+    <a href="#sim" data-nav="sim"><i class="mono">03</i>내비 시뮬레이터</a>
+    <a href="#reviews" data-nav="reviews"><i class="mono">04</i>여행 리뷰</a>
+    <div class="mnav__auth" id="mnavAuth"></div>
+  </div>
+
+  <main id="main">
+    <!-- 히어로 -->
+    <section class="hero" id="top" data-view="top">
+      <canvas class="hero__topo" id="topo" aria-hidden="true"></canvas>
+      <div class="hero__meta mono">
+        <span>N 37°33′29″ · E 126°58′41″</span>
+        <span class="hide-sm">TRAVEL GUIDE FOR EVERY AGE &amp; BODY</span>
+        <span>VOL. 01 — 2026</span>
+      </div>
+
+      <h1 class="hero__title" id="heroTitle">
+        <span class="line"><span class="line__in">빠른 길 말고</span></span>
+        <span class="line"><span class="line__in"><em>맞는 길</em>로,</span></span>
+        <span class="line"><span class="line__in">누구나 떠나는 여행</span></span>
+      </h1>
+
+      <a class="badge" href="#ages" aria-label="연령별 코스로 이동" data-cursor="SCROLL">
+        <svg viewBox="0 0 200 200" aria-hidden="true">
+          <defs><path id="circ" d="M100 100 m-78 0 a78 78 0 1 1 156 0 a78 78 0 1 1 -156 0"/></defs>
+          <text><textPath href="#circ">SLOW MAP ✺ 천천히 · 누구나 · 끝까지 ✺ SLOW MAP ✺ 느린지도 ✺ </textPath></text>
+        </svg>
+        <svg class="badge__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M6 14l6 6 6-6"/></svg>
+      </a>
+
+      <div class="hero__foot">
+        <p class="hero__lead">연령대와 몸의 조건에 맞춰 걷는 양, 쉬는 간격, 이동 수단까지 다시 그린 여행 코스. 출발부터 도착까지 <b>2D 내비게이션</b>으로 미리 달려보세요.</p>
+        <div class="hero__ages">
+          <p class="mono">나이를 고르세요</p>
+          <div class="hero__chips" id="heroChips" role="group" aria-label="연령대 바로가기"></div>
+        </div>
+        <a class="hero__access" href="#access" data-magnetic data-cursor="ACCESS">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="4" r="2"/><path d="M10 8h4l-.5 5H17l2 6h-2l-1.5-4H11a2 2 0 0 1-2-2.2z"/><path d="M8.2 11.5A5 5 0 1 0 15 18" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+          <span>여행이 불편한 분을 위한<br>무장애 코스</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- 선언문 -->
+    <section class="manifesto" aria-label="느린지도 소개" data-view="top">
+      <p class="eyebrow mono reveal">(00) — 왜 느린지도인가</p>
+      <p class="manifesto__text" data-scrub>나이가 들면 걸음이 느려지고, 몸이 불편하면 계단 하나가 벽이 됩니다. 느린지도는 빠른 길 대신 맞는 길을 찾습니다. 걷는 양과 쉬는 간격, 이동 수단까지 사람에 맞춰 다시 그린 여행 지도예요.</p>
+      <dl class="stats">
+        <div class="reveal"><dt>여행 코스</dt><dd><span data-count="13" data-count-courses>0</span></dd></div>
+        <div class="reveal"><dt>연령대</dt><dd><span data-count="5">0</span></dd></div>
+        <div class="reveal"><dt>무장애 유형</dt><dd><span data-count="3">0</span></dd></div>
+        <div class="reveal"><dt>출발 도시</dt><dd><span data-count="5">0</span></dd></div>
+      </dl>
+    </section>
+
+    <!-- 연령별 (세로 배치) -->
+    <section class="ages" id="ages" aria-labelledby="agesTitle" data-view="ages">
+      <div class="ages__pin">
+        <div class="ages__track" id="agesTrack">
+          <div class="ages__intro">
+            <p class="eyebrow mono">(01) — 연령별 가이드</p>
+            <h2 id="agesTitle">나이마다<br>다른 <em>여행의 속도</em></h2>
+            <p>걷는 양, 이동 간격, 쉬는 시간을 연령대에 맞춰 조절했어요. 코스를 고르면 내비게이션으로 바로 달려볼 수 있어요.</p>
+            <p class="ages__hint mono hide-sm"><span>SCROLL</span><i></i><span>아래로 내려보기</span></p>
+          </div>
+          <nav class="ages__jump" aria-label="연령대 바로가기"><ol class="ages__dots mono" id="agesDots"></ol></nav>
+          <!-- 연령 패널은 JS가 채움 -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 마키 -->
+    <div class="marquee" aria-hidden="true" data-view="top">
+      <div class="marquee__row" id="marquee">
+        <span>천천히 <em>Slow</em> ✺ 누구나 <em>For every body</em> ✺ 출발부터 도착까지 <em>Door to door</em> ✺&nbsp;</span>
+        <span>천천히 <em>Slow</em> ✺ 누구나 <em>For every body</em> ✺ 출발부터 도착까지 <em>Door to door</em> ✺&nbsp;</span>
+      </div>
+    </div>
+
+    <!-- 무장애 -->
+    <section class="access" id="access" aria-labelledby="accessTitle" data-view="access">
+      <div class="section-head">
+        <p class="eyebrow mono reveal">(02) — 무장애 여행 가이드</p>
+        <h2 id="accessTitle" class="reveal">계단 하나가<br><em>벽이 되지 않도록</em></h2>
+        <p class="reveal">휠체어 이용자, 보행이 불편한 분, 유모차·임산부와 함께하는 여행을 위해 계단과 오르막을 줄이고 쉬는 지점을 일정에 넣었어요.</p>
+      </div>
+      <div class="needs" id="needs"></div>
+      <div class="filter" id="accessFilter" role="group" aria-label="무장애 유형으로 코스 거르기"></div>
+      <div class="cards cards--3" id="accessCards"></div>
+      <p class="note reveal">시설 정보(대여, 엘리베이터, 화장실, 운영 시간)는 바뀔 수 있어요. 출발 전 각 시설에 꼭 확인하세요.</p>
+    </section>
+
+    <!-- 내비 시뮬레이터 -->
+    <section class="simsec" id="sim" aria-labelledby="simTitle" data-view="sim">
+      <div class="section-head">
+        <p class="eyebrow mono reveal">(03) — 2D 내비게이션 시뮬레이터</p>
+        <h2 id="simTitle" class="reveal">출발부터 도착까지,<br><em>미리 달려보기</em></h2>
+        <p class="reveal">출발지를 고르고 재생을 누르면 경로를 따라 이동하며 길 안내, 도착 예정 시각, 휴식 권장 지점을 보여줘요.</p>
+      </div>
+
+      <div class="sim">
+        <div class="sim__map" id="simMap">
+          <canvas id="map" aria-label="경로 지도"></canvas>
+
+          <div class="hud-turn" id="hudTurn" aria-live="polite">
+            <div class="hud-turn__icon" id="turnIcon"></div>
+            <div class="hud-turn__body">
+              <strong id="turnDist">—</strong>
+              <span id="turnText">코스를 고르고 재생하세요</span>
+            </div>
+            <div class="hud-turn__next" id="turnNext"></div>
+          </div>
+          <div class="hud-mode mono" id="hudMode">대기</div>
+
+          <div class="map-ctrl">
+            <button type="button" id="btnView" aria-pressed="false" title="전체 경로 보기">전체</button>
+            <button type="button" id="btnNorth" aria-pressed="false" title="북쪽을 위로 고정">진행↑</button>
+            <button type="button" id="btnZoomIn" title="확대" aria-label="확대">+</button>
+            <button type="button" id="btnZoomOut" title="축소" aria-label="축소">−</button>
+          </div>
+
+          <canvas class="minimap" id="minimap" width="160" height="120" aria-hidden="true"></canvas>
+
+          <div class="hud-bar">
+            <div class="hud-speed"><b id="hudSpeed">0</b><small>km/h</small></div>
+            <div><small>다음 목적지까지</small><b id="hudLeft">—</b></div>
+            <div><small>도착 예정</small><b id="hudEta">—</b></div>
+            <div><small>현재 시각</small><b id="hudClock">—</b></div>
+          </div>
+
+          <div class="arrive" id="arrive" hidden>
+            <div class="arrive__photo" id="arrivePhoto" hidden></div>
+            <p class="arrive__step mono" id="arriveStep"></p>
+            <h3 id="arriveName"></h3>
+            <p id="arriveDesc"></p>
+            <ul id="arriveA11y"></ul>
+            <p class="arrive__stay" id="arriveStay"></p>
+            <button type="button" class="arrive__more" id="arriveMore" hidden>사진·즐길거리 보기 ↓</button>
+          </div>
+          <div class="toast" id="toast" role="status" hidden></div>
+        </div>
+
+        <aside class="sim__side">
+          <div class="field">
+            <label for="selCourse" class="mono">COURSE · 코스</label>
+            <select id="selCourse"></select>
+          </div>
+          <div class="field">
+            <label for="selOrigin" class="mono">FROM · 출발지</label>
+            <select id="selOrigin"></select>
+          </div>
+          <div class="field">
+            <span class="field__lbl mono" id="planLbl">MODE · 이동 수단</span>
+            <div class="plans" id="planPick" role="radiogroup" aria-labelledby="planLbl"></div>
+            <p class="plans__note" id="planNote"></p>
+          </div>
+
+          <div class="controls">
+            <button type="button" class="btn btn--play" id="btnPlay"><span id="playIcon">▶</span> <span id="playLabel">재생</span></button>
+            <button type="button" class="btn" id="btnReset" title="처음부터">↺ 처음부터</button>
+          </div>
+          <button type="button" class="btn btn--guide" data-print-guide><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><path d="M7 14h10v7H7z"/></svg> 이 코스 가이드 출력 <small>인쇄 · PDF</small></button>
+          <div class="speeds" role="group" aria-label="재생 속도">
+            <button type="button" data-speed="1" class="is-on">1×</button>
+            <button type="button" data-speed="2">2×</button>
+            <button type="button" data-speed="4">4×</button>
+            <button type="button" data-speed="8">8×</button>
+          </div>
+          <label class="check"><input type="checkbox" id="chkVoice"> 음성 안내 켜기</label>
+
+          <dl class="summary" id="summary"></dl>
+
+          <div class="panel">
+            <h4 class="mono">ROUTE · 여정</h4>
+            <ol class="stops" id="stops"></ol>
+          </div>
+          <div class="panel panel--steps">
+            <h4 class="mono">TURN BY TURN · 길 안내 <small>항목을 누르면 그 지점으로</small></h4>
+            <ol class="steps" id="steps"></ol>
+          </div>
+        </aside>
+      </div>
+
+      <!-- 목적지 둘러보기: 사진 · 즐길거리 · 입장권/체험 결제 -->
+      <div class="explore" id="explore">
+        <div class="explore__head">
+          <p class="eyebrow mono">EXPLORE · 목적지 둘러보기</p>
+          <h3 id="exploreTitle">코스의 목적지</h3>
+          <p>목적지의 모습과 즐길거리예요. 입장권·체험은 토스페이먼츠로 미리 결제해볼 수 있어요. <b>요금은 시연용 예시이고 테스트 결제라 실제로 청구되지 않아요.</b></p>
+        </div>
+        <ol class="explore__list" id="exploreList"></ol>
+      </div>
+    </section>
+
+    <!-- 여행 리뷰 -->
+    <section class="reviews" id="reviews" aria-labelledby="reviewsTitle" data-view="reviews">
+      <div class="section-head">
+        <p class="eyebrow mono reveal">(04) — 여행 리뷰</p>
+        <h2 id="reviewsTitle" class="reveal">다녀온 사람들의<br><em>느린 후기</em></h2>
+        <p class="reveal">계단은 많았는지, 쉴 곳은 있었는지. 같은 나이대, 같은 이동 조건을 가진 사람의 후기가 가장 정확한 안내가 돼요.</p>
+      </div>
+
+      <div class="rv">
+        <aside class="rv__summary" aria-label="평점 요약">
+          <p class="rv__scope mono" id="rvScope">전체 코스</p>
+          <p class="rv__avg"><b id="rvAvg">0.0</b><span>/ 5</span></p>
+          <p class="rv__stars" id="rvStars" aria-hidden="true"></p>
+          <p class="rv__count mono" id="rvCount"></p>
+          <ul class="rv__dist" id="rvDist"></ul>
+          <ul class="rv__tagsum" id="rvTagSum"></ul>
+          <button type="button" class="btn btn--play rv__write" data-write-review>리뷰 쓰기</button>
+          <p class="rv__hint" id="rvHint">로그인하면 리뷰를 남길 수 있어요.</p>
+        </aside>
+
+        <div class="rv__main">
+          <div class="rv__bar">
+            <div class="field">
+              <label for="rvCourse" class="mono">COURSE · 코스</label>
+              <select id="rvCourse"></select>
+            </div>
+            <div class="field">
+              <label for="rvSort" class="mono">SORT · 정렬</label>
+              <select id="rvSort">
+                <option value="new">최신순</option>
+                <option value="high">평점 높은순</option>
+                <option value="low">평점 낮은순</option>
+                <option value="help">도움돼요 많은순</option>
+              </select>
+            </div>
+            <label class="check rv__mine"><input type="checkbox" id="rvMine"> 내 리뷰만 보기</label>
+          </div>
+          <ol class="rv__list" id="rvList" aria-live="polite"></ol>
+          <button type="button" class="btn rv__more" id="rvMore" hidden>리뷰 더 보기</button>
+        </div>
+      </div>
+
+      <div class="born" id="born" hidden>
+        <div class="born__head">
+          <p class="eyebrow mono">FROM REVIEWS · 자동 생성</p>
+          <h3>리뷰에서 태어난 코스 <span class="mono" id="bornCount"></span></h3>
+          <p>리뷰를 '자동 분석'으로 쓰면 글 속 장소를 찾아 기존 코스와 비교해요. 같은 코스가 없으면 이곳에 새 코스로 추가돼요. 사용자 후기로 만든 코스라 운영 정보는 꼭 직접 확인해주세요.</p>
+        </div>
+        <div class="cards cards--3" id="bornCards"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 로그인 · 회원가입 -->
+  <dialog class="dlg" id="authDlg" aria-labelledby="authTitle">
+    <button type="button" class="dlg__x" data-close aria-label="닫기">×</button>
+    <p class="dlg__eyebrow mono">SLOW MAP · ACCOUNT</p>
+    <h2 class="dlg__title" id="authTitle">로그인</h2>
+    <div class="dlg__tabs" role="tablist" aria-label="계정">
+      <button type="button" role="tab" id="tabLogin" aria-controls="formLogin" aria-selected="true" data-auth-tab="login">로그인</button>
+      <button type="button" role="tab" id="tabSignup" aria-controls="formSignup" aria-selected="false" data-auth-tab="signup" tabindex="-1">회원가입</button>
+    </div>
+
+    <form class="dlg__form" id="formLogin" role="tabpanel" aria-labelledby="tabLogin" novalidate>
+      <label class="fld"><span>이메일</span><input type="email" name="email" autocomplete="username" required><small class="fld__err"></small></label>
+      <label class="fld"><span>비밀번호</span><input type="password" name="password" autocomplete="current-password" required><small class="fld__err"></small></label>
+      <p class="form-msg" role="alert"></p>
+      <button type="submit" class="btn btn--play dlg__submit">로그인</button>
+      <p class="dlg__switch">아직 계정이 없나요? <button type="button" data-auth-tab="signup">회원가입</button></p>
+    </form>
+
+    <form class="dlg__form" id="formSignup" role="tabpanel" aria-labelledby="tabSignup" novalidate hidden>
+      <label class="fld"><span>닉네임 <em>2~12자</em></span><input type="text" name="nick" autocomplete="nickname" minlength="2" maxlength="12" required><small class="fld__err"></small></label>
+      <label class="fld"><span>이메일</span><input type="email" name="email" autocomplete="username" required><small class="fld__err"></small></label>
+      <div class="fld-row">
+        <label class="fld"><span>비밀번호 <em>8자 이상, 영문+숫자</em></span><input type="password" name="password" autocomplete="new-password" minlength="8" required><small class="fld__err"></small></label>
+        <label class="fld"><span>비밀번호 확인</span><input type="password" name="password2" autocomplete="new-password" required><small class="fld__err"></small></label>
+      </div>
+      <div class="fld-row">
+        <label class="fld"><span>연령대 <em>선택</em></span><select name="age" id="signupAge"></select></label>
+        <label class="fld"><span>이동 조건 <em>선택</em></span><select name="need" id="signupNeed"></select></label>
+      </div>
+      <label class="check dlg__agree"><input type="checkbox" name="agree" required> 계정이 이 브라우저에만 저장되는 데모 기능임을 이해했어요</label>
+      <small class="fld__err" id="agreeErr"></small>
+      <p class="form-msg" role="alert"></p>
+      <button type="submit" class="btn btn--play dlg__submit">가입하고 시작하기</button>
+      <p class="dlg__switch">이미 계정이 있나요? <button type="button" data-auth-tab="login">로그인</button></p>
+    </form>
+
+    <p class="dlg__note">계정과 리뷰는 이 브라우저(localStorage)에만 저장돼요. 비밀번호는 해시로만 보관하지만, 다른 서비스에서 쓰는 비밀번호는 사용하지 마세요.</p>
+  </dialog>
+
+  <!-- 리뷰 쓰기 -->
+  <dialog class="dlg dlg--wide" id="reviewDlg" aria-labelledby="reviewTitle">
+    <button type="button" class="dlg__x" data-close aria-label="닫기">×</button>
+    <p class="dlg__eyebrow mono">SLOW MAP · REVIEW</p>
+    <h2 class="dlg__title" id="reviewTitle">여행 리뷰 쓰기</h2>
+    <form class="dlg__form" id="formReview" novalidate>
+      <label class="fld"><span>다녀온 코스</span><select name="course" id="reviewCourse" required></select><small class="fld__err"></small></label>
+      <fieldset class="stars">
+        <legend>전체 만족도</legend>
+        <div class="stars__row">
+          <input type="radio" name="rating" id="rt5" value="5"><label for="rt5" title="5점"><span class="sr">5점</span></label>
+          <input type="radio" name="rating" id="rt4" value="4"><label for="rt4" title="4점"><span class="sr">4점</span></label>
+          <input type="radio" name="rating" id="rt3" value="3"><label for="rt3" title="3점"><span class="sr">3점</span></label>
+          <input type="radio" name="rating" id="rt2" value="2"><label for="rt2" title="2점"><span class="sr">2점</span></label>
+          <input type="radio" name="rating" id="rt1" value="1"><label for="rt1" title="1점"><span class="sr">1점</span></label>
+          <output class="stars__val mono" id="ratingVal">점수를 골라주세요</output>
+        </div>
+        <small class="fld__err" id="ratingErr"></small>
+      </fieldset>
+      <fieldset class="chips">
+        <legend>이동 편의 <em>해당하는 것 모두</em></legend>
+        <div class="chips__row" id="reviewTags"></div>
+      </fieldset>
+      <label class="fld"><span>다녀온 달 <em>선택</em></span><input type="month" name="visit" id="reviewVisit"></label>
+      <label class="fld"><span>후기 <em>10~1000자</em></span><textarea name="text" rows="6" maxlength="1000" required placeholder="계단·오르막, 쉴 곳, 화장실, 하차 지점처럼 다음 사람에게 도움이 될 이야기를 적어주세요."></textarea><small class="fld__count" id="reviewCount">0 / 1000</small><small class="fld__err"></small></label>
+      <div class="ana" id="reviewAna" aria-live="polite">
+        <p class="ana__title mono">AUTO ANALYSIS · 글 분석 결과</p>
+        <ol class="ana__places" id="anaPlaces"></ol>
+        <p class="ana__result" id="anaResult"></p>
+        <p class="ana__meta mono" id="anaMeta"></p>
+      </div>
+      <p class="form-msg" role="alert"></p>
+      <button type="submit" class="btn btn--play dlg__submit" id="reviewSubmit">리뷰 등록</button>
+    </form>
+  </dialog>
+
+  <!-- 입장권·체험 구매 (토스페이먼츠 결제창형 결제) -->
+  <dialog class="dlg" id="ticketDlg" aria-labelledby="ticketTitle">
+    <button type="button" class="dlg__x" data-close aria-label="닫기">×</button>
+    <p class="dlg__eyebrow mono">SLOW MAP · TICKETS</p>
+    <h2 class="dlg__title" id="ticketTitle">티켓 구매</h2>
+    <p class="testpay"><b>테스트 결제</b> 토스페이먼츠 테스트 환경이라 실제로 돈이 나가지 않아요. 요금은 예시예요.</p>
+    <form class="dlg__form" id="formTicket" novalidate>
+      <div class="tk__spot" id="tkSpot"></div>
+      <label class="fld"><span>방문일</span><input type="date" name="date" required><small class="fld__err"></small></label>
+      <fieldset class="chips">
+        <legend>수량</legend>
+        <ul class="tk__items" id="tkItems"></ul>
+      </fieldset>
+      <dl class="tk__sum" id="tkSum"></dl>
+      <p class="form-msg" role="alert"></p>
+      <button type="submit" class="btn btn--play dlg__submit tk__pay" id="tkPay">토스페이먼츠로 결제하기</button>
+      <p class="dlg__note">퍼블리싱 화면이라 결제 인증까지만 진행해요. 실제 결제 완료(결제 승인)는 서버 연동이 필요해요.</p>
+    </form>
+  </dialog>
+
+  <!-- 내 티켓 -->
+  <dialog class="dlg dlg--wide" id="ticketsDlg" aria-labelledby="ticketsTitle">
+    <button type="button" class="dlg__x" data-close aria-label="닫기">×</button>
+    <p class="dlg__eyebrow mono">SLOW MAP · MY TICKETS</p>
+    <h2 class="dlg__title" id="ticketsTitle">내 티켓</h2>
+    <ol class="tickets" id="ticketsList"></ol>
+  </dialog>
+
+  <!-- 여행 가이드 출력 미리보기 (A4) -->
+  <dialog class="pv" id="printView" aria-labelledby="pvTitle">
+    <div class="pv__bar">
+      <div class="pv__title">
+        <p class="mono">SLOW MAP · PRINT</p>
+        <h2 id="pvTitle">여행 가이드 미리보기</h2>
+      </div>
+      <fieldset class="pv__opts">
+        <legend class="sr">가이드에 넣을 내용</legend>
+        <label class="check"><input type="checkbox" data-opt="map" checked> 경로 지도</label>
+        <label class="check"><input type="checkbox" data-opt="photos" checked> 목적지 사진</label>
+        <label class="check"><input type="checkbox" data-opt="tickets" checked> 입장권·체험</label>
+        <label class="check"><input type="checkbox" data-opt="directions"> 길 안내 전체</label>
+        <label class="check"><input type="checkbox" data-opt="checklist" checked> 준비물 체크리스트</label>
+        <label class="check"><input type="checkbox" data-opt="big"> 큰 글씨</label>
+      </fieldset>
+      <div class="pv__actions">
+        <button type="button" class="btn btn--play" id="pvPrint">인쇄 · PDF 저장</button>
+        <button type="button" class="btn" id="pvClose">닫기</button>
+      </div>
+    </div>
+    <div class="pv__scroll">
+      <div class="pv__paper" id="printGuide" aria-live="polite"></div>
+    </div>
+  </dialog>
+
+  <div class="gtoast" id="gtoast" role="status" aria-live="polite" hidden></div>
+
+  <footer class="footer">
+    <div class="footer__top">
+      <p class="footer__cta">어디로든,<br><em>내 속도로.</em></p>
+      <nav class="footer__links" aria-label="바닥글 메뉴">
+        <a href="#ages">연령별 코스</a>
+        <a href="#access">무장애 여행</a>
+        <a href="#sim">내비 시뮬레이터</a>
+        <a href="#reviews">여행 리뷰</a>
+        <a href="#top">홈으로</a>
+      </nav>
+    </div>
+    <p class="footer__word" aria-hidden="true">Slow<em>Map</em></p>
+    <div class="footer__bottom mono">
+      <span>© 2026 느린지도 — 비공식 여행 코스 쇼케이스</span>
+      <span>지도·경로는 시뮬레이션이며 실제 도로 안내가 아닙니다. 좌표·소요 시간은 근사치이고, 운영 시간과 편의시설은 방문 전 확인하세요.</span>
+    </div>
+  </footer>
+
+  <script src="js/view.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/analyzer.js"></script>
+  <script src="js/community.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/fx.js"></script>
+  <script src="js/explore.js"></script>
+  <script src="js/guide.js"></script>
+</body>
+</html>

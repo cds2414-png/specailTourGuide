@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>결제 확인 — 느린지도</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="payres-page" data-page="success">
+  <main class="payres" id="main">
+    <a class="brand" href="../index.html" aria-label="느린지도 처음으로">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M6 31c6-14 12 3 17-10S31 12 34 7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/><circle cx="6" cy="31" r="3.6" fill="currentColor"/><circle cx="34" cy="7" r="3.6" fill="var(--signal)"/></svg>
+      <span class="brand__ko">느린지도</span><span class="brand__en">Slow Map</span>
+    </a>
+    <section class="payres__card" id="payState" aria-live="polite">
+      <p class="dlg__eyebrow mono">TOSS PAYMENTS</p>
+      <div class="payres__spin" aria-hidden="true"></div>
+      <h1>결제 결과를 확인하는 중이에요</h1>
+      <p>잠시만 기다려주세요.</p>
+    </section>
+  </main>
+  <script src="../js/pay.js"></script>
+</body>
+</html>
