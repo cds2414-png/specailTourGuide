@@ -93,6 +93,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ../.claude/serve.ps1 -Root .
 - 배포 주소는 `https://specailtourguide.vercel.app/`(Vercel). canonical·OG·sitemap·robots·JSON-LD가 이 절대 주소를 쓴다. 주소가 바뀌면 `index.html`, `robots.txt`, `sitemap.xml`, `tools/gen-seo.js`의 `SITE`를 함께 바꾼다.
 - `index.html`의 `<!-- seo:jsonld -->`(Organization·WebSite·WebApplication·코스 ItemList·FAQPage), `<!-- seo:faq -->`(홈 화면 FAQ 섹션 `#faq`), `<!-- seo:courses -->`(`<noscript>` 코스 요약)와 `llms.txt`는 **생성된 블록**이다. 손으로 고치지 말고 `js/data.js`나 `tools/gen-seo.js`의 `FAQ`를 고친 뒤 `node tools/gen-seo.js`로 다시 만든다(Node는 이 작업에만 쓰고 사이트는 Node에 의존하지 않는다). 화면 FAQ와 FAQPage 구조화 데이터는 같은 문구여야 한다.
 - `robots.txt`는 생성형 AI 검색 봇을 허용하고 `/pay/`만 막는다. 결제 결과 페이지는 `noindex`.
+- `google68425b399eea28fe.html`은 Google Search Console(URL 접두어 속성) 소유권 확인 파일이다. 지우면 인증이 풀리므로 남겨 둔다.
 - 공유 이미지 `assets/og-image.png`(1200×630), 로고 `assets/logo.png`, `assets/apple-touch-icon.png`, 파비콘 `favicon.svg`.
 
 ## 콘텐츠 원칙
