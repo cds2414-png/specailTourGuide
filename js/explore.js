@@ -93,8 +93,8 @@
   }
 
   // 도착 카드에 사진과 '즐길거리 보기' 버튼
-  var arrivePhoto = $('#arrivePhoto'), arriveMore = $('#arriveMore'), lastArrive = null;
-  function showArrivePhoto(stop, no) {
+  var arrivePhoto = $('#arrivePhoto'), arriveMore = $('#arriveMore'), offerEl = $('#arriveOffer'), lastArrive = null;
+  function showArrivePhoto(stop, no, phase) {
     var key = (course ? course.id : '') + ':' + no;
     if (key === lastArrive) return;
     lastArrive = key;
@@ -102,6 +102,8 @@
     arrivePhoto.innerHTML = '<div class="spot__ph is-loading" aria-hidden="true"></div>';
     getPhoto(stop.name).then(function (p) { if (lastArrive === key) arrivePhoto.innerHTML = photoHTML(stop, p); });
     var n = ticketsFor(stop).length;
+    // 티켓이 있는 중간 목적지: 멈춰서 구매를 제안하고, 사지 않으면 다음 목적지로
+    if (n && phase === 'dwell') { arriveMore.hidden = true; startOffer(stop, no); return; }
     arriveMore.hidden = false;
     arriveMore.textContent = n ? '입장권·체험 ' + n + '개 보기 ↓' : '사진·즐길거리 보기 ↓';
     arriveMore.setAttribute('data-goto-spot', String(no));
@@ -111,13 +113,79 @@
     if (li) window.scrollTo({ top: li.getBoundingClientRect().top + window.scrollY - 100, behavior: reduce ? 'auto' : 'smooth' });
   });
 
-  window.addEventListener('slowmap:course', function (e) { renderList(e.detail.course); lastArrive = null; arrivePhoto.hidden = true; arriveMore.hidden = true; });
+  /* ───────── 도착지 티켓 제안 ─────────
+     티켓을 사지 않으면(건너뛰기 · 시간 초과 · 구매창을 그냥 닫음) 다음 목적지로 넘어간다. */
+  var OFFER_SEC = 10;
+  var offer = { active: false, no: 0, left: 0, paying: false, timer: 0, last: 0 };
+  var offerSubmitted = false; // 구매창에서 결제를 시작했는지
+  function startOffer(stop, no) {
+    endOffer();
+    A.holdDwell();
+    offer = { active: true, no: no, left: OFFER_SEC, paying: false, timer: 0, last: performance.now() };
+    var tk = ticketsFor(stop);
+    offerEl.hidden = false;
+    offerEl.innerHTML =
+      '<p class="offer__title">이곳의 입장권 · 체험 <small>요금은 예시</small></p>' +
+      '<ul class="offer__list">' + tk.map(function (t) {
+        return '<li><span class="spot__kind is-' + (t.kind === '체험' ? 'exp' : t.kind === '교통' ? 'ride' : 'in') + '">' + esc(t.kind) + '</span>' +
+          esc(t.name) + '<b class="mono">' + won(t.price) + '</b></li>';
+      }).join('') + '</ul>' +
+      '<div class="offer__btns">' +
+        '<button type="button" class="offer__buy" data-offer="buy">티켓 구매하기</button>' +
+        '<button type="button" class="offer__skip" data-offer="skip">구매 안 하고 다음 목적지로 →</button>' +
+      '</div>' +
+      '<div class="offer__count" aria-live="polite"><i><b></b></i><span></span></div>';
+    paintOffer();
+    offer.timer = setInterval(tickOffer, 100);
+  }
+  function paintOffer() {
+    var bar = $('.offer__count b', offerEl), txt = $('.offer__count span', offerEl);
+    if (!bar) return;
+    if (offer.paying) {
+      bar.style.width = '0%';
+      txt.textContent = '티켓을 고르는 중이에요. 구매하지 않으면 다음 목적지로 넘어가요.';
+      return;
+    }
+    bar.style.width = (offer.left / OFFER_SEC * 100).toFixed(1) + '%';
+    var paused = !A.state().playing;
+    txt.textContent = paused ? '일시정지 중 · 재생하면 ' + Math.ceil(offer.left) + '초 뒤 다음 목적지로 넘어가요'
+      : Math.ceil(offer.left) + '초 뒤 다음 목적지로 넘어가요';
+  }
+  function tickOffer() {
+    var now = performance.now(), dt = (now - offer.last) / 1000;
+    offer.last = now;
+    if (!offer.active) return;
+    if (!offer.paying && A.state().playing) offer.left = Math.max(0, offer.left - dt);
+    paintOffer();
+    if (offer.left <= 0) skipOffer('auto');
+  }
+  function endOffer() {
+    if (offer.timer) clearInterval(offer.timer);
+    offer.active = false; offer.timer = 0;
+    offerEl.hidden = true; offerEl.innerHTML = '';
+  }
+  function skipOffer(reason) {
+    if (!offer.active) return;
+    endOffer();
+    A.releaseDwell();
+    C.notify(reason === 'auto' ? '티켓을 구매하지 않아 다음 목적지로 이동해요.'
+      : reason === 'closed' ? '구매하지 않고 다음 목적지로 이동해요.' : '다음 목적지로 이동해요.');
+  }
+  offerEl.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-offer]'); if (!b || !offer.active) return;
+    if (b.getAttribute('data-offer') === 'skip') { skipOffer('skip'); return; }
+    offer.paying = true; paintOffer();
+    openBuy(offer.no - 1);
+  });
+
+  window.addEventListener('slowmap:course', function (e) { endOffer(); renderList(e.detail.course); lastArrive = null; arrivePhoto.hidden = true; arriveMore.hidden = true; });
   window.addEventListener('slowmap:progress', function (e) {
     var d = e.detail;
     if (!course) return;
     markNow(d.phase === 'idle' ? 0 : d.stopNo);
-    if ((d.phase === 'dwell' || d.phase === 'done') && d.stop) showArrivePhoto(d.stop, d.stopNo);
-    else if (d.phase === 'move') { lastArrive = null; }
+    if (d.phase !== 'dwell' && offer.active) endOffer(); // 다시 출발했거나 처음부터·다른 지점으로 이동
+    if ((d.phase === 'dwell' || d.phase === 'done') && d.stop) showArrivePhoto(d.stop, d.stopNo, d.phase);
+    else if (d.phase === 'move' || d.phase === 'idle') { lastArrive = null; }
   });
   // app.js가 먼저 첫 코스를 불러온 상태
   var st = A.state();
@@ -184,6 +252,7 @@
     getPhoto(s.name).then(function (p) { $('.tk__photo', spot).innerHTML = photoHTML(s, p); });
     renderItems();
     if (location.protocol === 'file:') msgEl.textContent = '파일로 직접 연 페이지에서는 결제 후 돌아올 주소를 만들 수 없어요. 로컬 서버(http://)로 열어주세요.';
+    offerSubmitted = false;
     C.openDlg(dlg);
   }
   listEl.addEventListener('click', function (e) {
@@ -212,6 +281,11 @@
   }
 
   var paymentWindow = null;
+  // 구매창을 결제 없이 닫으면 '사지 않음'으로 보고 다음 목적지로
+  // close 이벤트는 비동기로 늦게 올 수 있어 open 속성이 사라지는 순간을 직접 감지한다
+  new MutationObserver(function () {
+    if (!dlg.open && offer.active && offer.paying && !offerSubmitted) skipOffer('closed');
+  }).observe(dlg, { attributes: true, attributeFilter: ['open'] });
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     msgEl.textContent = '';
@@ -221,6 +295,7 @@
       dateErr.textContent = '내일부터 6개월 안의 날짜를 골라주세요.'; form.date.focus(); return;
     }
     var ls = lines(); if (!ls.length) return;
+    offerSubmitted = true;
     var u = C.currentUser(); if (!u) { C.closeDlg(dlg); C.openAuth('login'); return; }
     var amount = calc();
     var count = ls.reduce(function (s, l) { return s + l.qty; }, 0);

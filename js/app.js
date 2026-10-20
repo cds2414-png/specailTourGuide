@@ -561,7 +561,7 @@
 
   var S = {
     course: null, originKey: 'seoul', legs: [], li: 0, s: 0,
-    phase: 'idle', dwell: 0, dwellMax: 0, playing: false, speed: 1,
+    phase: 'idle', dwell: 0, dwellMax: 0, hold: false, playing: false, speed: 1,
     view: 'overview', northUp: false, zoomMul: 1,
     cam: { x: 0, y: 0, z: 10, rot: 0 }, heading: 0, gi: -1, bounds: null, visible: true
   };
@@ -658,7 +658,7 @@
   }
 
   function reset(snapCam) {
-    S.li = 0; S.s = 0; S.phase = 'idle'; S.gi = -1; S.dwell = 0;
+    S.li = 0; S.s = 0; S.phase = 'idle'; S.gi = -1; S.dwell = 0; S.hold = false;
     hideArrive(); hideToast();
     S.view = 'overview'; syncViewBtns();
     var L = S.legs[0];
@@ -705,7 +705,7 @@
   });
 
   function seek(li, s) {
-    S.li = li; S.s = s; S.phase = 'move'; S.dwell = 0;
+    S.li = li; S.s = s; S.phase = 'move'; S.dwell = 0; S.hold = false;
     hideArrive();
     if (S.view === 'overview' || S.view === 'free') { S.view = 'follow'; syncViewBtns(); }
     S.heading = headingAt(S.legs[li], s);
@@ -960,6 +960,7 @@
         if (final) { S.phase = 'done'; stop(); }
       }
     } else if (S.phase === 'dwell') {
+      if (S.hold) return; // 티켓 제안 중: explore.js가 releaseDwell()을 부를 때까지 머문다
       S.dwell += dt * S.speed;
       if (S.dwell >= S.dwellMax) {
         hideArrive();
@@ -1298,7 +1299,14 @@
   // 리뷰로 코스가 추가·삭제되면 community.js가 호출
   window.SlowApp = {
     cardHTML: cardHTML,
-    state: function () { return { course: S.course, legs: S.legs, li: S.li, phase: S.phase }; },
+    state: function () { return { course: S.course, legs: S.legs, li: S.li, phase: S.phase, playing: S.playing, hold: S.hold }; },
+    // 도착지에서 티켓 제안 동안 머물기 / 구매하지 않으면 바로 다음 목적지로
+    holdDwell: function () { if (S.phase === 'dwell') S.hold = true; },
+    releaseDwell: function () {
+      if (!S.hold) return;
+      S.hold = false; S.dwell = S.dwellMax;
+      if (!S.playing) play(); // 일시정지 중에 '다음 목적지로'를 눌러도 바로 진행
+    },
     // guide.js(가이드 출력)용
     load: function (id) { if (courseById(id)) loadCourse(id); },
     guideData: function () {

@@ -698,6 +698,24 @@ legend em { font-weight: 400; color: var(--ink-3); margin-left: 4px; font-size: 
 .arrive__photo { position: relative; margin: -26px -28px 16px; height: 150px; border-radius: 24px 24px 0 0; overflow: hidden; background: var(--paper-3); }
 .arrive__more { margin-top: 12px; padding: 9px 14px; border-radius: 999px; border: 0; background: #0064ff; color: #fff; font-weight: 700; font-size: .84rem; }
 .arrive__more:hover { background: var(--ink); }
+/* 도착 카드: 티켓 제안 · 미구매 시 다음 목적지로 */
+.arrive { max-height: calc(100% - 32px); overflow-y: auto; }
+.arrive__offer { margin-top: 14px; padding: 14px; border-radius: 16px; background: #eef3ff; }
+.offer__title { font-size: .8rem; font-weight: 700; color: #1b3f9e !important; }
+.offer__title small { margin-left: 4px; font-weight: 400; color: #5b6fa8; }
+.offer__list { list-style: none; margin: 8px 0 12px; padding: 0; display: grid; gap: 5px; }
+.offer__list li { display: flex; align-items: center; gap: 8px; font-size: .84rem; }
+.offer__list li b { margin-left: auto; font-size: .78rem; white-space: nowrap; }
+.offer__btns { display: grid; gap: 6px; }
+.offer__buy, .offer__skip { padding: 11px 14px; border-radius: 999px; font-weight: 700; font-size: .88rem; }
+.offer__buy { border: 0; background: #0064ff; color: #fff; }
+.offer__buy:hover { background: var(--ink); }
+.offer__skip { border: 1px solid var(--ink); background: #fff; color: var(--ink); }
+.offer__skip:hover { background: var(--ink); color: var(--paper); }
+.offer__count { margin-top: 10px; display: grid; gap: 5px; }
+.offer__count i { display: block; height: 4px; border-radius: 2px; background: rgba(27, 63, 158, .15); overflow: hidden; }
+.offer__count b { display: block; height: 100%; background: #0064ff; transition: width .1s linear; }
+.offer__count span { font-size: .74rem; color: #3d5596; }
 
 /* 티켓 구매 */
 .testpay { margin: -6px 0 16px !important; padding: 10px 14px; border-radius: 12px; background: #e8f0ff; color: #1b4fd1; font-size: .82rem; }
