@@ -414,6 +414,30 @@ body.menu-open .nav { color: var(--paper); }
   background-position: calc(100% - 22px) 52%, calc(100% - 16px) 52%; background-size: 6px 6px; background-repeat: no-repeat;
 }
 .field select:hover { border-color: var(--ink); }
+/* 출발 지역 입력 */
+.origin { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+.origin input {
+  width: 100%; min-height: 48px; padding: 12px 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--paper-2);
+  font-weight: 500; transition: border-color .2s, box-shadow .2s;
+}
+.origin input:hover { border-color: var(--ink); }
+.origin input:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px rgba(15, 28, 24, .12); }
+.origin input[aria-invalid="true"] { border-color: var(--signal-ink); box-shadow: 0 0 0 3px rgba(181, 55, 11, .15); }
+.origin__go { min-height: 48px; padding: 0 18px; border: 0; border-radius: 14px; background: var(--ink); color: var(--paper); font-weight: 700; }
+.origin__go:hover { background: var(--signal-ink); }
+.origin__msg { margin-top: 6px !important; font-size: .86rem; color: var(--ink-2); line-height: 1.5; }
+.origin__msg:empty { display: none; }
+.near h4 { margin-bottom: 10px; }
+.near__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.near__list button {
+  width: 100%; display: grid; gap: 2px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: #fff;
+  text-align: left; transition: border-color .2s, background .2s;
+}
+.near__list button:hover { border-color: var(--ink); }
+.near__list button[aria-current="true"] { border-color: var(--signal); background: #fff4ee; }
+.near__list b { font-size: .95rem; line-height: 1.35; }
+.near__list small { font-size: .82rem; color: var(--ink-2); }
+.near__list span { font-size: .8rem; color: var(--ink-3); }
 .field__lbl { display: block; font-size: .8rem; font-weight: 700; color: var(--ink-3); margin-bottom: 6px; }
 .plans { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .plans button {

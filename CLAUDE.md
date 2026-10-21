@@ -57,7 +57,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ../.claude/serve.ps1 -Root .
 - `GROUPS`: 연령 그룹 `u40`·`g40`·`g50`·`g60`·`o70`. `NEEDS`: 무장애 유형 `wheel`·`walk`·`family`.
 - `COURSES`: `group`(연령 id 또는 `'access'`), `need`, `access`(`{mode: car|train|flight, hub, line}` — 출발지에서 여행 지역까지), `localMode`, `gentle`·`a11y`(휴식 안내·콜택시 문구), `stops[]`.
 - 정류지: `name`, `lat`·`lng`(근사 좌표), `stay`(분), `road`, `desc`, `a11y[]`, `night`(다음 날로 넘김), `mode`·`line`(그 정류지로 가는 수단 덮어쓰기, 예: `train` + `'해변열차'`).
-- `ORIGINS`(출발역 + `airport` + `terminal`), `STATIONS`(기차 선택 시 역), `TICKETS`(**정류지 이름이 키**, 요금은 시연용 예시), `WIKI`(사진 검색어 덮어쓰기, `null`이면 사진 대신 그림), `LAND`·`JEJU`·`CITIES`·`HIGHWAYS`(지도 배경).
+- `ORIGINS`(출발역 + `airport` + `terminal`), `PLACES`(출발 지역 입력용 시·군 `[이름, 시·도, 위도, 경도]`), `AIRPORTS`(입력한 출발 지역에서 가까운 공항), `STATIONS`(기차 선택 시 역), `TICKETS`(**정류지 이름이 키**, 요금은 시연용 예시), `WIKI`(사진 검색어 덮어쓰기, `null`이면 사진 대신 그림), `LAND`·`JEJU`·`CITIES`·`HIGHWAYS`(지도 배경).
 
 ## 내비 시뮬레이터 (`js/app.js`)
 
@@ -65,6 +65,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ../.claude/serve.ps1 -Root .
 - 도보·휠체어·배·관광열차 구간은 어떤 수단을 골라도 유지된다. 정류장·역·터미널처럼 거쳐 가는 지점은 `minor`, 대기 시간은 `wait`.
 - `makeLeg`가 경로 점(`pts`·`cum`), 턴바이턴 안내(`ins`), 속도·이동 시간을 계산하고, `buildRoute` 끝에서 시각표(`c0` 출발, `c1` 도착, `c2` 다음 출발)를 채운다.
 - 단일 rAF 루프 `loop()` → `step()`(진행) → `updateCamera()` → `draw()`·`drawMinimap()`·`updateHUD()`. 도착하면 `phase='dwell'`로 잠시 머문 뒤 다음 구간으로 간다. `S.hold`가 참이면 머무름이 멈춘다.
+- 출발지는 입력란(`#originInput` + datalist)으로 받는다. 역 이름 → 시·군 이름 → 이름이 들어간 입력 순으로 찾고, 시·군은 `place:<이름>` 키로 `T.ORIGINS`에 동적으로 추가한다. 역이 아닌 출발지는 열차 전에 가까운 역으로 가는 구간을, 제주 출발 육지 코스는 항공 구간을 먼저 넣는다. 사이드바의 「출발지에서 가까운 코스」는 첫 정류지까지 직선거리 순 3개다.
 - `SlowApp` API: `cardHTML`, `drawCardMaps`, `refresh`, `state`, `load`, `guideData`, `routeImage(w, h, local)`, `holdDwell`, `releaseDwell`.
 
 ## 도착지 티켓 제안 (`js/explore.js`)
@@ -85,7 +86,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ../.claude/serve.ps1 -Root .
 
 ## 저장소 키
 
-`localStorage`: `slowmap.users`(비밀번호는 PBKDF2 해시+솔트), `slowmap.session`, `slowmap.reviews`, `slowmap.courses`, `slowmap.tickets`, `slowmap-big`(글자 크게). `sessionStorage`: `slowmap.pendingOrder`, `slowmap.photos`(위키백과 사진 캐시).
+`localStorage`: `slowmap.users`(비밀번호는 PBKDF2 해시+솔트), `slowmap.session`, `slowmap.reviews`, `slowmap.courses`, `slowmap.tickets`, `slowmap-big`(글자 크게), `slowmap.origin`(마지막 출발지 키). `sessionStorage`: `slowmap.pendingOrder`, `slowmap.photos`(위키백과 사진 캐시).
 
 ## CSS (`css/style.css`)
 

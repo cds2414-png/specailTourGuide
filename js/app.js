@@ -270,6 +270,11 @@
     var r = course.region.split('·')[0].trim().split(' ');
     return ['서울', '부산', '대구', '인천', '대전', '광주', '울산', '세종', '제주'].indexOf(r[0]) >= 0 ? r[0] : r[r.length - 1];
   }
+  function nearestOf(list, p) {
+    var best = null;
+    list.forEach(function (s) { var d = kmBetween(p, s); if (!best || d < best.d) best = { s: s, d: d }; });
+    return best ? best.s : null;
+  }
   function nearestStation(p) {
     var best = null;
     (T.STATIONS || []).forEach(function (s) { var d = kmBetween(p, s); if (!best || d < best.d) best = { s: s, d: d }; });
@@ -303,21 +308,35 @@
       else push(to, 'car', extra);
     }
 
-    var near = kmBetween(o, first) < 40;
+    // 역이 아닌 곳(입력한 출발 지역)에서 열차를 타려면 먼저 가까운 역으로 간다
+    function toStation(hub) {
+      var os = nearestStation(cur);
+      if (os && kmBetween(cur, os) > 3 && kmBetween(os, hub) > 3) local({ name: os.name, lat: os.lat, lng: os.lng }, { minor: true, wait: 15 });
+    }
+    var isJeju = function (p) { return p.lat < 33.7; };
+    var jejuOrigin = isJeju(o);
+    // 제주에서 출발해 육지 코스로 가면 먼저 항공편으로 건너간다
+    if (jejuOrigin && !isJeju(first)) {
+      push(o.airport, 'car', { road: '공항 진입로' });
+      push(nearestOf(T.AIRPORTS.filter(function (a) { return !isJeju(a); }), first), 'flight', { line: '항공편' });
+    }
+    var near = kmBetween(cur, first) < 40;
     // ── 출발지에서 여행 지역까지 ──
     if (acc.mode === 'flight') {
-      // 제주 등 섬: 어떤 수단이든 항공 이용
-      if (plan === 'transit') pushTransit(o.airport, { minor: true, wait: 30 });
-      else push(o.airport, 'car', { road: '공항 진입로' });
-      push(acc.hub, 'flight', { line: '항공편' });
+      // 제주 등 섬: 어떤 수단이든 항공 이용 (제주에서 출발하면 바로 이동)
+      if (!jejuOrigin) {
+        if (plan === 'transit') pushTransit(o.airport, { minor: true, wait: 30 });
+        else push(o.airport, 'car', { road: '공항 진입로' });
+        push(acc.hub, 'flight', { line: '항공편' });
+      }
     } else if (plan === 'auto') {
-      if (acc.mode === 'train' && kmBetween(cur, acc.hub) > 3) push(acc.hub, 'train', { line: acc.line });
+      if (acc.mode === 'train' && !near && kmBetween(cur, acc.hub) > 3) { toStation(acc.hub); push(acc.hub, 'train', { line: acc.line }); }
     } else if (plan === 'train' && !near) {
       var st = acc.mode === 'train' ? { name: acc.hub.name, lat: acc.hub.lat, lng: acc.hub.lng, line: acc.line } : nearestStation(first);
-      if (st && kmBetween(cur, st) > 3) push({ name: st.name, lat: st.lat, lng: st.lng }, 'train', { line: st.line || 'KTX' });
+      if (st && kmBetween(cur, st) > 3) { toStation(st); push({ name: st.name, lat: st.lat, lng: st.lng }, 'train', { line: st.line || 'KTX' }); }
     } else if (plan === 'transit' && !near) {
-      var t1 = o.terminal || o;
-      pushTransit(t1, { minor: true, wait: 20 });
+      var t1 = cur === o ? (o.terminal || o) : cur; // 제주에서 건너왔으면 도착 공항에서 바로 터미널로
+      if (t1 !== cur) pushTransit(t1, { minor: true, wait: 20 });
       var toward = kmBetween(cur, first) > 8 ? 3 : 1.2;
       var t2 = offsetPoint(first, cur, toward, 0.4, regionName(course) + ' 버스터미널');
       push(t2, 'bus', { line: '고속버스', road: '고속도로', minor: true, wait: 10 });
@@ -559,7 +578,7 @@
   /* ───────── 시뮬레이터 ───────── */
   var cv = $('#map'), ctx = cv.getContext('2d'), mapBox = $('#simMap');
   var mm = $('#minimap'), mctx = mm.getContext('2d');
-  var selCourse = $('#selCourse'), selOrigin = $('#selOrigin');
+  var selCourse = $('#selCourse');
   var W = 0, H = 0;
 
   var S = {
@@ -585,7 +604,94 @@
     if (keep && courseById(keep)) selCourse.value = keep;
   }
   fillCourseSelect();
-  selOrigin.innerHTML = Object.keys(T.ORIGINS).map(function (k) { return '<option value="' + k + '">' + T.ORIGINS[k].name + '</option>'; }).join('');
+  /* 출발 지역: 직접 입력 (역 5곳 + 전국 시·군) */
+  var originForm = $('#originForm'), originInput = $('#originInput'), originMsg = $('#originMsg'), nearList = $('#nearList');
+  var ORIGIN_KEY = 'slowmap.origin';
+  $('#originList').innerHTML = Object.keys(T.ORIGINS).map(function (k) { return '<option value="' + esc(T.ORIGINS[k].name) + '"></option>'; }).join('') +
+    (T.PLACES || []).map(function (p) { return '<option value="' + esc(p[0]) + '">' + esc(p[1]) + '</option>'; }).join('');
+  function norm(v) {
+    return String(v || '').replace(/s+/g, '').replace(/(특별자치시|특별자치도|특별시|광역시|시청|군청|시|군)$/, '');
+  }
+  function placeOrigin(p) {
+    var o = { name: p[0], lat: p[2], lng: p[3], place: true }, jeju = p[2] < 33.7;
+    o.airport = nearestOf((T.AIRPORTS || []).filter(function (a) { return (a.lat < 33.7) === jeju; }), o);
+    o.terminal = { name: p[0] + ' 버스터미널', lat: p[2] + 0.004, lng: p[3] + 0.003 };
+    return o;
+  }
+  function placeKey(p) {
+    var key = 'place:' + p[0];
+    if (!T.ORIGINS[key]) T.ORIGINS[key] = placeOrigin(p);
+    return key;
+  }
+  // 입력한 글자로 출발지를 찾는다: 역 이름 → 시·군 이름(시·도 포함) → 이름이 들어간 입력(예: 전주한옥마을) → 앞글자
+  function findOrigin(text) {
+    var q = norm(text), places = T.PLACES || [], hit = null;
+    if (!q) return null;
+    var keys = Object.keys(T.ORIGINS).filter(function (k) { return k.indexOf('place:') !== 0; });
+    for (var i = 0; i < keys.length; i++) if (norm(T.ORIGINS[keys[i]].name) === q) return keys[i];
+    places.forEach(function (p) { if (!hit && (norm(p[0]) === q || norm(p[1] + p[0]) === q)) hit = p; });
+    if (!hit) places.forEach(function (p) { var n = norm(p[0]); if (q.indexOf(n) >= 0 && (!hit || n.length > norm(hit[0]).length)) hit = p; });
+    if (!hit) places.forEach(function (p) { if (!hit && norm(p[0]).indexOf(q) === 0) hit = p; });
+    return hit ? placeKey(hit) : null;
+  }
+  function courseWho(c) {
+    if (c.group === 'access') { var n = T.NEEDS.filter(function (x) { return x.id === c.need; })[0]; return '무장애 · ' + (n ? n.title : ''); }
+    var g = T.GROUPS.filter(function (x) { return x.id === c.group; })[0];
+    return g ? g.label : '';
+  }
+  // 출발지에서 가까운 코스 (첫 정류지까지 직선거리 순)
+  function renderNear() {
+    var o = T.ORIGINS[S.originKey];
+    var list = T.COURSES.filter(function (c) { return !c.generated; })
+      .map(function (c) { return { c: c, d: kmBetween(o, c.stops[0]) }; })
+      .sort(function (a, b) { return a.d - b.d; }).slice(0, 3);
+    nearList.innerHTML = list.map(function (x) {
+      var c = x.c, min = moveMinutes(buildRoute(c, S.originKey, 'auto'));
+      return '<li><button type="button" data-near="' + esc(c.id) + '"' + (S.course && S.course.id === c.id ? ' aria-current="true"' : '') + '>' +
+        '<b>' + esc(c.title) + '</b><small>' + esc(courseWho(c)) + ' · ' + esc(c.region) + ' · ' + esc(c.days) + '</small>' +
+        '<span class="mono">' + (x.d < 3 ? '출발지 근처' : '직선 ' + Math.round(x.d) + 'km') + ' · 총 이동 약 ' + fmtDur(min) + '</span></button></li>';
+    }).join('');
+    $('#nearTitle').textContent = o.name + '에서 가까운 코스';
+  }
+  nearList.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-near]');
+    if (b) { loadCourse(b.getAttribute('data-near')); toast(S.course.title + ' · ' + T.ORIGINS[S.originKey].name + ' 출발 경로를 불러왔어요', 2400); }
+  });
+  function setOrigin(key) {
+    S.originKey = key;
+    try { localStorage.setItem(ORIGIN_KEY, key); } catch (e) { /* 무시 */ }
+    originInput.value = T.ORIGINS[key].name;
+    if (S.course) loadCourse(S.course.id);
+    renderNear();
+  }
+  originForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var text = originInput.value.trim(), key = findOrigin(text);
+    if (!key) {
+      originInput.setAttribute('aria-invalid', 'true');
+      originMsg.textContent = text ? '「' + text + '」을(를) 찾지 못했어요. 시·군 이름(예: 수원, 전주)이나 역 이름으로 입력해 주세요.' : '출발 지역을 입력해 주세요.';
+      return;
+    }
+    originInput.removeAttribute('aria-invalid');
+    setOrigin(key);
+    originMsg.textContent = T.ORIGINS[key].name + ' 출발로 바꿨어요 · ' + S.course.title + ' 총 이동 약 ' + fmtDur(moveMinutes(S.legs)) + '(출발지에서 코스 끝까지)';
+  });
+  // 자동완성 목록에서 고르면 바로 적용
+  originInput.addEventListener('input', function (e) {
+    originInput.removeAttribute('aria-invalid');
+    if (e.inputType && e.inputType !== 'insertReplacementText') return;
+    var v = originInput.value;
+    if ($$('#originList option').some(function (op) { return op.value === v; })) originForm.dispatchEvent(new Event('submit', { cancelable: true }));
+  });
+  (function restoreOrigin() {
+    var saved = null;
+    try { saved = localStorage.getItem(ORIGIN_KEY); } catch (e) { /* 무시 */ }
+    if (saved && saved.indexOf('place:') === 0) {
+      var p = (T.PLACES || []).filter(function (x) { return 'place:' + x[0] === saved; })[0];
+      if (p) S.originKey = placeKey(p);
+    } else if (saved && T.ORIGINS[saved]) S.originKey = saved;
+    originInput.value = T.ORIGINS[S.originKey].name;
+  })();
 
   // 연령 패널의 '리뷰로 만든 코스' 바로가기
   function updateBornLinks() {
@@ -597,7 +703,6 @@
     });
   }
   selCourse.addEventListener('change', function () { loadCourse(selCourse.value); });
-  selOrigin.addEventListener('change', function () { S.originKey = selOrigin.value; loadCourse(S.course.id); });
 
   /* 이동 수단 선택 */
   S.plan = 'auto';
@@ -642,7 +747,8 @@
 
   function loadCourse(id) {
     var c = courseById(id);
-    S.course = c; selCourse.value = id; selOrigin.value = S.originKey;
+    S.course = c; selCourse.value = id; originMsg.textContent = '';
+    $$('[data-near]', nearList).forEach(function (b) { if (b.getAttribute('data-near') === id) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); });
     S.legs = buildRoute(c, S.originKey, S.plan);
     var gi = 0;
     S.flat = [];
@@ -1295,6 +1401,7 @@
   drawCardMaps();
   resize();
   loadCourse(T.COURSES[0].id);
+  renderNear();
   syncViewBtns();
   updateBornLinks();
   requestAnimationFrame(loop);
