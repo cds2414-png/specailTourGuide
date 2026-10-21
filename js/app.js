@@ -430,8 +430,8 @@
     cv.width = w * DPR; cv.height = h * DPR;
     var x = cv.getContext('2d');
     x.setTransform(DPR, 0, 0, DPR, 0, 0);
-    var dark = !!cv.closest('.access');
-    var ink = dark ? '236,231,220' : '15,28,24', accent = dark ? '#3d6bf2' : '#ff4f1a';
+    var blue = !!cv.closest('.access'); // 무장애 카드는 파란 경로
+    var ink = '15,28,24', accent = blue ? '#2f5fe0' : '#ff4f1a';
     var r = rng(hash(c.id));
     // 등고선
     var cx = w * (0.3 + r() * 0.4), cy = h * (0.3 + r() * 0.4), ph = r() * 6;
@@ -456,7 +456,7 @@
     var legs = [];
     for (var i = 1; i < c.stops.length; i++) legs.push(makeLeg(c.stops[i - 1], c.stops[i], c.stops[i].mode || c.localMode, { course: c }));
     x.lineCap = 'round'; x.lineJoin = 'round';
-    [[dark ? '#1d3028' : '#e2dbcb', 8], [accent, 3]].forEach(function (st) {
+    [[blue ? '#d6e0f2' : '#e2dbcb', 8], [accent, 3]].forEach(function (st) {
       x.strokeStyle = st[0]; x.lineWidth = st[1];
       legs.forEach(function (L) {
         x.beginPath();
@@ -468,7 +468,7 @@
       var X = ox + p.x * sc, Y = oy + p.y * sc, end = k === pts.length - 1;
       x.beginPath(); x.arc(X, Y, 9, 0, Math.PI * 2);
       x.fillStyle = end ? accent : 'rgb(' + ink + ')'; x.fill();
-      x.fillStyle = end ? '#fff' : (dark ? '#0f1c18' : '#f5f1e8');
+      x.fillStyle = end ? '#fff' : '#f5f1e8';
       x.font = '700 9.5px "JetBrains Mono", monospace'; x.textAlign = 'center'; x.textBaseline = 'middle';
       x.fillText(String(k + 1), X, Y + 0.5);
     });

@@ -299,7 +299,7 @@
 
   /* ───────── 스크롤 장면 루프 ───────── */
   var progress = $('#progress'), heroTitle = $('#heroTitle');
-  var accessSec = $('#access'), footer = $('.footer');
+  var footer = $('.footer');
   var navHidden = false, lastT = performance.now(), tSec = 0;
 
   function frame(now) {
@@ -320,8 +320,8 @@
     }
     nav.classList.toggle('is-solid', y > 40);
     var navY = 40;
-    var ar = accessSec.getBoundingClientRect(), fr = footer.getBoundingClientRect();
-    nav.classList.toggle('is-dark', (ar.top < navY && ar.bottom > navY && ar.height > 0) || fr.top < navY);
+    var fr = footer.getBoundingClientRect();
+    nav.classList.toggle('is-dark', fr.top < navY);
 
     // 히어로 패럴랙스
     if (y < vh * 1.2) {
