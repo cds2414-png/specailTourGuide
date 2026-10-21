@@ -1,4 +1,4 @@
-// 느린지도 SEO/AEO/GEO 정적 블록 생성: node tools/gen-seo.js
+// 모두의 여행길 SEO/AEO/GEO 정적 블록 생성: node tools/gen-seo.js
 // js/data.js 코스·FAQ로 index.html의 seo:jsonld·seo:faq·seo:courses 블록과 llms.txt를 다시 쓴다. 사이트 실행에는 필요 없다.
 const fs = require('fs');
 const path = require('path');
@@ -16,7 +16,7 @@ const courses = T.COURSES;
 const audience = c => c.group === 'access' ? needLabel[c.need] : groupLabel[c.group];
 
 const FAQ = [
-  ['느린지도(SLOW MAP)는 어떤 서비스인가요?',
+  ['모두의 여행길(Route for All)은 어떤 서비스인가요?',
    '연령대와 몸의 조건에 맞춰 걷는 양, 쉬는 간격, 이동 수단을 다시 짠 국내 여행 코스 가이드예요. 고른 코스를 출발지부터 도착지까지 2D 내비게이션 시뮬레이터로 미리 달려볼 수 있어요.'],
   ['어떤 연령대의 여행 코스가 있나요?',
    T.GROUPS.map(g => g.label).join(', ') + ' 다섯 연령대로 나눠 코스를 추천해요. 나이가 많을수록 하루 방문지와 걷는 거리를 줄이고 쉬는 시간을 늘렸어요.'],
@@ -34,15 +34,15 @@ const FAQ = [
    '리뷰 글에서 장소와 이동 조건, 걷기 강도를 분석해 기존 코스의 리뷰로 묶거나, 같은 코스가 없으면 「리뷰에서 태어난 코스」로 새 코스를 만들어요. 계정과 리뷰는 이 브라우저에만 저장되는 데모 기능이에요.']
 ];
 
-const org = { '@type': 'Organization', '@id': SITE + '#org', name: '느린지도 SLOW MAP', alternateName: ['느린지도', 'SLOW MAP'], url: SITE, logo: SITE + 'assets/logo.png' };
+const org = { '@type': 'Organization', '@id': SITE + '#org', name: '모두의 여행길 Route for All', alternateName: ['모두의 여행길', 'Route for All'], url: SITE, logo: SITE + 'assets/logo.png' };
 const graph = [
   org,
-  { '@type': 'WebSite', '@id': SITE + '#website', url: SITE, name: '느린지도 SLOW MAP', alternateName: '느린지도', inLanguage: 'ko-KR', publisher: { '@id': SITE + '#org' },
+  { '@type': 'WebSite', '@id': SITE + '#website', url: SITE, name: '모두의 여행길 Route for All', alternateName: '모두의 여행길', inLanguage: 'ko-KR', publisher: { '@id': SITE + '#org' },
     description: '연령대별·무장애 국내 여행 코스를 출발부터 도착까지 2D 내비게이션으로 미리 달려보는 여행 가이드' },
-  { '@type': 'WebApplication', '@id': SITE + '#app', name: '느린지도 2D 내비게이션 시뮬레이터', url: SITE + '#sim', applicationCategory: 'TravelApplication', operatingSystem: 'Web', inLanguage: 'ko-KR',
+  { '@type': 'WebApplication', '@id': SITE + '#app', name: '모두의 여행길 2D 내비게이션 시뮬레이터', url: SITE + '#sim', applicationCategory: 'TravelApplication', operatingSystem: 'Web', inLanguage: 'ko-KR',
     isAccessibleForFree: true, offers: { '@type': 'Offer', price: '0', priceCurrency: 'KRW' }, publisher: { '@id': SITE + '#org' },
     featureList: ['연령대별 여행 코스 추천', '휠체어·보행 불편·유모차 동반 무장애 코스', '출발지별 자동차·대중교통·기차 경로 시뮬레이션', 'A4 여행 가이드 인쇄·PDF 저장', '글자 크게 보기'] },
-  { '@type': 'ItemList', '@id': SITE + '#courses', name: '느린지도 여행 코스', numberOfItems: courses.length,
+  { '@type': 'ItemList', '@id': SITE + '#courses', name: '모두의 여행길 코스', numberOfItems: courses.length,
     itemListElement: courses.map((c, i) => ({ '@type': 'ListItem', position: i + 1, item: {
       '@type': 'TouristTrip', name: c.title, description: c.summary, touristType: audience(c),
       keywords: [c.region, c.days].concat(c.tags || []).join(', '), provider: { '@id': SITE + '#org' },
@@ -60,7 +60,7 @@ const nsHTML = sections.map(([h, list]) => '      <h3>' + h + '</h3>\n      <ul>
   '        <li><b>' + esc(c.title) + '</b> (' + esc(audience(c)) + ' · ' + esc(c.region) + ' · ' + esc(c.days) + ') — ' + esc(c.summary) + ' 코스: ' + esc(c.stops.map(s => s.name).join(' → ')) + '</li>').join('\n') + '\n      </ul>').join('\n');
 
 const llms = [
-  '# 느린지도 SLOW MAP',
+  '# 모두의 여행길 Route for All',
   '',
   '> 연령대(' + T.GROUPS.map(g => g.label).join('·') + ')와 몸의 조건(' + T.NEEDS.map(n => n.title).join('·') + ')에 맞춘 국내 여행 코스를 출발부터 도착까지 2D 내비게이션 시뮬레이터로 미리 달려보는 한국어 여행 가이드 웹사이트예요.',
   '',

@@ -2,7 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-「느린지도 SLOW MAP」 — 연령별(40세 이하~70세 이상)·무장애 여행 코스를 2D 내비게이션 시뮬레이터로 미리 달려보는 사이트. GitHub `cds2414-png/specailTourGuide`의 저장소 루트가 이 폴더다.
+「모두의 여행길 Route for All」 — 연령별(40세 이하~70세 이상)·무장애 여행 코스를 2D 내비게이션 시뮬레이터로 미리 달려보는 사이트. GitHub `cds2414-png/specailTourGuide`의 저장소 루트가 이 폴더다.
+
+이름은 2026-10 「느린지도 SLOW MAP」에서 바꿨다. 내부 이름(`slowmap.*` 저장소 키, `slowmap:*` 이벤트, `Slow*` 전역 객체)은 사용자 데이터 호환을 위해 그대로 둔다.
 
 **퍼블리싱 전용**: 순수 HTML/CSS/JS만 쓴다. 프레임워크·번들러·npm 패키지·JS 라이브러리를 추가하지 않는다. 빌드·린트·테스트 단계가 없다. 서버 코드가 없으므로 계정·리뷰·리뷰로 만든 코스·티켓은 모두 브라우저 `localStorage`에 저장되는 **데모 기능**이다. 외부 리소스는 Google Fonts, 토스페이먼츠 SDK(`js.tosspayments.com/v2/standard`, 결제할 때만 동적 로드), 위키백과 REST API(목적지 사진)뿐이다.
 

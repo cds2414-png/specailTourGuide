@@ -1,4 +1,4 @@
-/* 느린지도 — 여행 가이드 출력 (A4 미리보기 → 인쇄 · PDF 저장)
+/* 모두의 여행길 — 여행 가이드 출력 (A4 미리보기 → 인쇄 · PDF 저장)
    현재 시뮬레이터에 불러온 코스·출발지·이동 수단을 그대로 한 권의 가이드로 엮는다.
    인쇄는 브라우저 인쇄 기능(window.print)을 쓰며, 'PDF로 저장'을 고르면 PDF 파일이 된다. */
 (function () {
@@ -49,7 +49,7 @@
     // ── 표지 ──
     var html = '<article class="pg' + (o.big ? ' is-big' : '') + '">' +
       '<header class="pg__head">' +
-        '<p class="pg__brand"><b>느린지도</b> SLOW MAP · 여행 가이드<span>' + printed + ' 출력</span></p>' +
+        '<p class="pg__brand"><b>모두의 여행길</b> ROUTE FOR ALL · 여행 가이드<span>' + printed + ' 출력</span></p>' +
         '<h1>' + esc(c.title) + '</h1>' +
         '<p class="pg__sum">' + esc(c.summary) + '</p>' +
         '<dl class="pg__facts">' +
@@ -135,7 +135,7 @@
     if (T.HELP) html += '<section class="pg__sec"><h2>' + sec() + '도움이 필요할 때</h2><ul class="pg__help">' +
       T.HELP.map(function (h) { return '<li><b>' + esc(h.label) + '</b> ' + esc(h.value) + ' <span>' + esc(h.note) + '</span></li>'; }).join('') + '</ul></section>';
 
-    html += '<footer class="pg__foot"><p><b>느린지도</b> · 연령별·무장애 여행 코스</p>' +
+    html += '<footer class="pg__foot"><p><b>모두의 여행길</b> · 연령별·무장애 여행 코스</p>' +
       '<p>지도·경로·시각은 시뮬레이션 결과로 실제 도로 안내가 아니에요. 운영 시간과 편의시설은 방문 전 각 시설에 확인하세요.' +
       (o.photos ? ' 사진 출처: 위키백과(각 사진 아래 표기).' : '') + '</p></footer></article>';
 

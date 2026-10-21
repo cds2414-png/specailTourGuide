@@ -1,4 +1,4 @@
-/* 느린지도 — 회원가입 · 로그인 · 여행 리뷰
+/* 모두의 여행길 — 회원가입 · 로그인 · 여행 리뷰
    서버가 없는 정적 사이트이므로 모든 데이터는 이 브라우저의 localStorage에만 저장되는 데모 기능이다.
    비밀번호는 평문으로 저장하지 않고 PBKDF2(SHA-256) 해시와 솔트만 보관한다. */
 (function () {
@@ -278,11 +278,11 @@
   /* ───────── 리뷰 데이터 ───────── */
   // 실제 이용 후기가 아님을 화면에 '예시'로 표시하는 견본 리뷰
   var SAMPLES = [
-    { id: 'sample-1', sample: true, course: 'a-walk-busan', nick: '느린지도 예시', age: 'o70', need: 'walk', rating: 5, tags: ['rest', 'drop'], visit: '', helpful: [],
+    { id: 'sample-1', sample: true, course: 'a-walk-busan', nick: '모두의 여행길 예시', age: 'o70', need: 'walk', rating: 5, tags: ['rest', 'drop'], visit: '', helpful: [],
       text: '예시 리뷰예요. 이런 식으로 "열차에 앉아서 바다를 봐서 무릎이 덜 아팠다", "정거장 승강 동선은 미리 물어보는 게 좋았다"처럼 직접 겪은 이동 정보를 남겨주세요.', createdAt: Date.UTC(2026, 9, 12) },
-    { id: 'sample-2', sample: true, course: 'g40-gyeongju', nick: '느린지도 예시', age: 'g40', need: '', rating: 4, tags: ['flat', 'crowd'], visit: '', helpful: [],
+    { id: 'sample-2', sample: true, course: 'g40-gyeongju', nick: '모두의 여행길 예시', age: 'g40', need: '', rating: 4, tags: ['flat', 'crowd'], visit: '', helpful: [],
       text: '예시 리뷰예요. 아이와 함께였다면 "주말 오전에 붐볐다", "잔디밭에서 쉬기 좋았다"처럼 가족 여행에 도움이 되는 내용을 적어주세요.', createdAt: Date.UTC(2026, 9, 5) },
-    { id: 'sample-3', sample: true, course: 'a-wheel', nick: '느린지도 예시', age: 'g50', need: 'wheel', rating: 4, tags: ['lift', 'toilet'], visit: '', helpful: [],
+    { id: 'sample-3', sample: true, course: 'a-wheel', nick: '모두의 여행길 예시', age: 'g50', need: 'wheel', rating: 4, tags: ['lift', 'toilet'], visit: '', helpful: [],
       text: '예시 리뷰예요. 휠체어로 다녀왔다면 엘리베이터 위치, 장애인 화장실, 콜택시 하차 지점처럼 다음 사람이 꼭 알아야 할 정보를 남겨주세요.', createdAt: Date.UTC(2026, 8, 28) }
   ];
   function userReviews() { return load(KEY.reviews, []); }

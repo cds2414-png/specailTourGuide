@@ -1,4 +1,4 @@
-/* 느린지도 — 결제 결과 페이지 (pay/success.html, pay/fail.html) · 퍼블리싱 전용
+/* 모두의 여행길 — 결제 결과 페이지 (pay/success.html, pay/fail.html) · 퍼블리싱 전용
    success: 리다이렉트 쿼리(paymentKey·orderId·amount)를 요청 때 보관한 주문과 대조하고 티켓을 저장한다.
    결제 승인 API는 시크릿 키가 필요해 서버에서만 호출할 수 있으므로 '결제 인증 완료'까지 처리한다. */
 (function () {
@@ -68,5 +68,5 @@
     '</dl>' +
     '<p class="payres__note">퍼블리싱 화면이라 결제 <b>인증</b>까지만 진행했어요. 실제 결제 완료는 서버에서 시크릿 키로 결제 승인 API를 호출해야 해요. 요금은 시연용 예시예요.</p>' +
     ACTIONS_OK;
-  document.title = '티켓 결제 인증 완료 — 느린지도';
+  document.title = '티켓 결제 인증 완료 — 모두의 여행길';
 })();

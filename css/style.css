@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────
-   느린지도 SLOW MAP — 디자인 시스템
+   모두의 여행길 Route for All — 디자인 시스템
    ───────────────────────────────────────── */
 :root {
   --paper: #ece7dc;
@@ -90,7 +90,7 @@ em { font-style: normal; }
 .nav.is-dark.is-solid { background: rgba(15, 28, 24, .82); border-color: var(--dark-line); }
 .brand { display: flex; align-items: center; gap: 10px; }
 .brand svg { width: 34px; height: 34px; }
-.brand__ko { font-family: var(--f-serif); font-weight: 900; font-size: 1.2rem; letter-spacing: -.02em; }
+.brand__ko { font-family: var(--f-serif); font-weight: 900; font-size: 1.2rem; letter-spacing: -.02em; white-space: nowrap; }
 .brand__en { font-family: var(--f-latin); font-style: italic; font-size: 1.2rem; opacity: .6; }
 .nav__links { display: flex; gap: 4px; margin-left: auto; }
 .nav__links a { position: relative; display: flex; align-items: baseline; gap: 6px; padding: 8px 14px; font-size: .92rem; font-weight: 500; }
@@ -1002,6 +1002,10 @@ legend em { font-weight: 400; color: var(--ink-3); margin-left: 4px; font-size: 
 }
 @media (max-width: 640px) {
   .brand__en, .hide-sm { display: none; }
+  .nav { gap: 10px; }
+  .brand { gap: 8px; }
+  .brand svg { width: 28px; height: 28px; }
+  .brand__ko { font-size: 1.02rem; }
   .hero { padding-top: 84px; }
   .hero__title { font-size: clamp(1.9rem, 9vw, 2.6rem); margin: 5vh 0 26vh; }
   .badge { width: 100px; bottom: auto; top: 58%; }
