@@ -1,11 +1,10 @@
-/* 느린지도 — 연출 (프리로더 · 등고선 히어로 · 커서 · 스크롤 장면) */
+/* 느린지도 — 연출 (프리로더 · 등고선 히어로 · 스크롤 장면) */
 (function () {
   'use strict';
 
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   var body = document.body;
   var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
   var lerp = function (a, b, t) { return a + (b - a) * t; };
@@ -14,7 +13,7 @@
 
   /* ───────── 프리로더 ───────── */
   var loader = $('#loader'), loaderNum = $('#loaderNum');
-  var fontsReady = false, t0 = performance.now(), minDur = reduce ? 200 : 1800;
+  var fontsReady = false, t0 = performance.now(), minDur = reduce ? 200 : 700;
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { fontsReady = true; });
   else fontsReady = true;
   setTimeout(function () { fontsReady = true; }, 3500);
@@ -93,43 +92,6 @@
     $$('[data-count]').forEach(function (el) { cntIO.observe(el); });
   } else {
     $$('.reveal').forEach(function (el) { el.classList.add('is-in'); });
-  }
-
-  /* ───────── 커서 · 자석 버튼 ───────── */
-  var cursor = $('#cursor'), cLabel = $('#cursorLabel');
-  var mouse = { x: vw / 2, y: vh / 2, has: false }, ring = { x: vw / 2, y: vh / 2 };
-  var cRing = $('.cursor__ring', cursor), cDot = $('.cursor__dot', cursor);
-  if (fine && !reduce) {
-    body.classList.add('has-cursor');
-    window.addEventListener('pointermove', function (e) {
-      mouse.x = e.clientX; mouse.y = e.clientY;
-      if (!mouse.has) { mouse.has = true; ring.x = mouse.x; ring.y = mouse.y; }
-      if (!(e.target.closest && e.target.closest('#map'))) cursor.classList.remove('is-hidden');
-    }, { passive: true });
-    document.addEventListener('pointerleave', function () { cursor.classList.add('is-hidden'); });
-    document.addEventListener('pointerover', function (e) {
-      var t = e.target.closest('[data-cursor], a, button, select, label');
-      var lab = t && t.getAttribute('data-cursor');
-      cursor.classList.toggle('is-label', !!lab);
-      cursor.classList.toggle('is-hover', !!t && !lab);
-      if (lab) cLabel.textContent = lab;
-      cursor.classList.toggle('is-dark', !!e.target.closest('.access, .footer, .loader, .mnav'));
-      cursor.classList.toggle('is-hidden', !!e.target.closest('#map'));
-    });
-    $$('[data-magnetic]').forEach(function (el) {
-      el.addEventListener('pointermove', function (e) {
-        var r = el.getBoundingClientRect();
-        var x = e.clientX - (r.left + r.width / 2), y = e.clientY - (r.top + r.height / 2);
-        el.style.transform = 'translate(' + x * 0.28 + 'px,' + y * 0.38 + 'px)';
-      });
-      el.addEventListener('pointerleave', function () {
-        el.style.transition = 'transform .7s cubic-bezier(.2,.8,.2,1)';
-        el.style.transform = '';
-        setTimeout(function () { el.style.transition = ''; }, 700);
-      });
-    });
-  } else {
-    cursor.style.display = 'none';
   }
 
   /* ───────── 등고선 히어로 ───────── */
@@ -361,7 +323,6 @@
     var ar = accessSec.getBoundingClientRect(), fr = footer.getBoundingClientRect();
     nav.classList.toggle('is-dark', (ar.top < navY && ar.bottom > navY && ar.height > 0) || fr.top < navY);
 
-
     // 히어로 패럴랙스
     if (y < vh * 1.2) {
       heroTitle.style.transform = 'translate3d(0,' + (y * 0.22).toFixed(1) + 'px,0)';
@@ -394,18 +355,11 @@
     // 마키
     if (!reduce) {
       if (Math.abs(dy) > 0.5) mqDir = dy > 0 ? -1 : 1;
-      var speed = 60 + Math.min(Math.abs(vel) * 14, 900);
+      var speed = 36 + Math.min(Math.abs(vel) * 3, 90);
       mqX += mqDir * speed * dt;
       var half = mq.scrollWidth / 2;
       if (half > 0) { if (mqX <= -half) mqX += half; if (mqX > 0) mqX -= half; }
       mq.style.transform = 'translate3d(' + mqX.toFixed(1) + 'px,0,0)';
-    }
-
-    // 커서
-    if (fine && !reduce && mouse.has) {
-      ring.x = lerp(ring.x, mouse.x, 0.18); ring.y = lerp(ring.y, mouse.y, 0.18);
-      cRing.style.transform = 'translate3d(' + ring.x.toFixed(1) + 'px,' + ring.y.toFixed(1) + 'px,0)';
-      cDot.style.transform = 'translate3d(' + mouse.x + 'px,' + mouse.y + 'px,0)';
     }
 
     requestAnimationFrame(frame);

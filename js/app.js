@@ -167,6 +167,8 @@
       minor: !!opt.minor, wait: opt.wait
     };
     leg.travelMin = len / leg.kmh * 60 + (mode === 'car' ? 4 : 0);
+    // 무장애 코스의 차량 구간은 교통약자 콜택시를 불러 기다리는 시간을 넣는다 (실제 평균 대기 20~40분, 지역에 따라 1시간 이상)
+    if (mode === 'car' && opt.course && opt.course.a11y) leg.call = opt.course.need === 'wheel' ? 40 : 25;
     leg.dur = clamp(4.5 + Math.sqrt(len) * 1.15, 5, 18); // 1배속 실제 재생 초
     leg.ins = buildInstr(leg, ctrl);
     leg.note = legNote(leg);
@@ -238,7 +240,7 @@
     if (L.mode === 'bus') return (L.line || '시내버스') + ' 승차 · 약 ' + fmtDur(L.travelMin) + (c.a11y || c.gentle ? ' · 저상버스 여부를 정류장 안내판에서 확인하세요' : '');
     if (L.mode === 'subway') return '지하철 승차 · 약 ' + fmtDur(L.travelMin) + (c.a11y || c.gentle ? ' · 역 엘리베이터 위치를 안내도에서 확인하세요' : '');
     if (L.mode === 'wheel') return '휠체어·유모차 평지 이동 · 경사로와 턱 없는 길로 안내해요';
-    if (c.a11y && L.mode === 'car') return '교통약자 콜택시·택시로 이동 · 하차 위치를 출입구 가까이로 요청하세요';
+    if (c.a11y && L.mode === 'car') return '교통약자 콜택시·택시로 이동 · 배차 대기 약 ' + fmtDur(L.call) + '을 넣었어요. 미리 예약하고 하차 위치를 출입구 가까이로 요청하세요';
     if (c.gentle && L.mode === 'car' && L.len > 40) return '1시간마다 쉬어가도록 휴게소 휴식을 넣었어요';
     return '';
   }
@@ -335,6 +337,7 @@
     var c = 9 * 60;
     legs.forEach(function (L, i) {
       if (L.mode === 'flight') c += 40;
+      c += L.call || 0; // 콜택시 배차 대기
       L.c0 = c; c += L.travelMin; L.c1 = c;
       if (L.stop) { c += L.stop.stay; if (L.stop.night && i < legs.length - 1) c = (Math.floor(c / 1440) + 1) * 1440 + 9 * 60; }
       else c += L.wait != null ? L.wait : 15;
@@ -344,7 +347,7 @@
   }
   // 이동 시간 합계 (머무는 시간 제외, 환승 대기 포함)
   function moveMinutes(legs) {
-    return legs.reduce(function (s, L) { return s + L.travelMin + (L.stop ? 0 : (L.wait != null ? L.wait : 15)) + (L.mode === 'flight' ? 40 : 0); }, 0);
+    return legs.reduce(function (s, L) { return s + L.travelMin + (L.call || 0) + (L.stop ? 0 : (L.wait != null ? L.wait : 15)) + (L.mode === 'flight' ? 40 : 0); }, 0);
   }
 
   /* ───────── 형식 ───────── */
@@ -676,13 +679,13 @@
       '<div><dt>이동·환승</dt><dd>' + fmtDur(moveMinutes(S.legs)) + '</dd></div>' +
       '<div><dt>일정 종료</dt><dd>' + fmtClock(last.c2) + '</dd></div>';
 
-    var items = ['<li data-k="0"><i></i><b>' + esc(S.legs[0].from.name) + '</b><small>출발 · ' + fmtClock(S.legs[0].c0) + '</small></li>'];
+    var items = ['<li data-k="0"><i></i><b>' + esc(S.legs[0].from.name) + '</b><small>출발 · ' + fmtClock(S.legs[0].c0 - (S.legs[0].call || 0)) + '</small></li>'];
     S.legs.forEach(function (L, k) {
       var m = (L.mode === 'bus' || L.mode === 'subway' || L.mode === 'train') && L.line ? L.line : MODES[L.mode].label;
       var after = L.stop ? ' · ' + fmtDur(L.stop.stay) + ' 머묾'
         : L.wait ? ' · ' + (L.minor ? '대기 ' : '환승 ') + fmtDur(L.wait) : L.wait === 0 ? '' : ' · 환승';
       items.push('<li data-k="' + (k + 1) + '" class="' + (L.stop ? '' : L.minor ? 'is-hub is-minor' : 'is-hub') + '"><i></i><b>' + (L.stop ? L.stopNo + '. ' : '') + esc(L.to.name) + '</b>' +
-        '<small>' + esc(m) + ' ' + fmtDist(L.len) + ' · ' + fmtClock(L.c1) + ' 도착' + after + (L.stop && L.stop.night && k < S.legs.length - 1 ? ' · 숙박' : '') + '</small></li>');
+        '<small>' + (L.call ? '콜택시 대기 ' + fmtDur(L.call) + ' · ' : '') + esc(m) + ' ' + fmtDist(L.len) + ' · ' + fmtClock(L.c1) + ' 도착' + after + (L.stop && L.stop.night && k < S.legs.length - 1 ? ' · 숙박' : '') + '</small></li>');
     });
     $('#stops').innerHTML = items.join('');
 

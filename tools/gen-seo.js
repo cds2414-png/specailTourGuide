@@ -6,7 +6,7 @@ const root = path.resolve(__dirname, "..");
 global.window = global;
 require(path.join(root, 'js/data.js'));
 const T = global.TRIP;
-const SITE = 'https://specailtourguide.vercel.app/';
+const SITE = 'https://specialtourguide.vercel.app/';
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 const groupLabel = Object.fromEntries(T.GROUPS.map(g => [g.id, g.label]));

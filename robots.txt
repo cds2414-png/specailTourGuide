@@ -19,4 +19,4 @@ User-agent: Daumoa
 Allow: /
 Disallow: /pay/
 
-Sitemap: https://specailtourguide.vercel.app/sitemap.xml
+Sitemap: https://specialtourguide.vercel.app/sitemap.xml

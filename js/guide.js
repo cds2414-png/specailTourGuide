@@ -80,10 +80,10 @@
     }
 
     // ── 일정표 ──
-    var rows = '<tr class="is-start"><td class="mono">' + d.fmtClock(legs[0].c0) + '</td><td><b>' + esc(legs[0].from.name) + '</b> 출발</td><td></td></tr>';
+    var rows = '<tr class="is-start"><td class="mono">' + d.fmtClock(legs[0].c0 - (legs[0].call || 0)) + '</td><td><b>' + esc(legs[0].from.name) + '</b> 출발</td><td></td></tr>';
     legs.forEach(function (L) {
       rows += '<tr class="is-move"><td class="mono">' + d.fmtClock(L.c0) + '</td><td><span class="pg__mode" style="--m:' + d.modeColor(L) + '">' + esc(d.modeLabel(L)) + '</span> ' +
-        esc(L.from.name) + ' → ' + esc(L.to.name) + '</td><td>' + d.fmtDist(L.len) + ' · ' + d.fmtDur(L.travelMin) + '</td></tr>';
+        esc(L.from.name) + ' → ' + esc(L.to.name) + '</td><td>' + (L.call ? '콜택시 대기 ' + d.fmtDur(L.call) + '<br>' : '') + d.fmtDist(L.len) + ' · ' + d.fmtDur(L.travelMin) + '</td></tr>';
       if (L.stop) {
         var s = L.stop;
         rows += '<tr class="is-stop"><td class="mono">' + d.fmtClock(L.c1) + '</td><td><b><i class="pg__no">' + L.stopNo + '</i>' + esc(s.name) + '</b>' +
@@ -106,7 +106,7 @@
           (o.photos ? '<figure class="pg__photo" data-pg-photo="' + k + '"><div class="pg__ph">' + esc(s.name) + '</div></figure>' : '') +
           '<div class="pg__spotbody"><p class="mono">STOP ' + ('0' + (k + 1)).slice(-2) + '</p><h3>' + esc(s.name) + '</h3><p>' + esc(s.desc || '') + '</p>' +
           (o.tickets ? (tk.length
-            ? '<ul class="pg__tk">' + tk.map(function (t) { return '<li><span>' + esc(t.kind) + '</span>' + esc(t.name) + '<b>' + won(t.price) + ' / ' + esc(t.unit || '1인') + '</b></li>'; }).join('') + '</ul>'
+            ? '<ul class="pg__tk">' + tk.map(function (t) { return '<li><span>' + esc(t.kind) + '</span>' + esc(t.name) + '<b>' + won(t.price) + ' / ' + esc(t.unit || '1인') + '</b></li>'; }).join('') + '</ul>' + (T.PERKS && T.PERKS[s.name] ? '<p class="pg__perk">' + esc(T.PERKS[s.name].text) + '</p>' : '')
             : '<p class="pg__free">별도 티켓 없이 둘러볼 수 있어요.</p>') : '') +
           '</div></div>';
       }).join('') + '</div>' +
@@ -130,6 +130,10 @@
         '<div><h3>이 코스를 위한 팁</h3><ul class="pg__tips">' + tips.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></div>' +
         '</div></section>';
     }
+
+    // ── 문의처 ──
+    if (T.HELP) html += '<section class="pg__sec"><h2>' + sec() + '도움이 필요할 때</h2><ul class="pg__help">' +
+      T.HELP.map(function (h) { return '<li><b>' + esc(h.label) + '</b> ' + esc(h.value) + ' <span>' + esc(h.note) + '</span></li>'; }).join('') + '</ul></section>';
 
     html += '<footer class="pg__foot"><p><b>느린지도</b> · 연령별·무장애 여행 코스</p>' +
       '<p>지도·경로·시각은 시뮬레이션 결과로 실제 도로 안내가 아니에요. 운영 시간과 편의시설은 방문 전 각 시설에 확인하세요.' +

@@ -24,6 +24,11 @@
   function loadTickets() { try { return JSON.parse(localStorage.getItem(KEY_TICKETS) || '[]'); } catch (e) { return []; } }
   function saveTickets(l) { try { localStorage.setItem(KEY_TICKETS, JSON.stringify(l)); } catch (e) { /* 무시 */ } }
   function ticketsFor(stop) { return (T.TICKETS && T.TICKETS[stop.name]) || []; }
+  // 우대 요금 안내: 결제를 권하기 전에 무료·할인 대상인지 먼저 알린다
+  function perkHTML(stop) {
+    var p = T.PERKS && T.PERKS[stop.name];
+    return p ? '<p class="perk' + (p.free ? ' is-free' : '') + '"><b>' + (p.free ? '무료·할인 대상인지 먼저 확인하세요' : '할인 여부 확인') + '</b>' + esc(p.text) + '</p>' : '';
+  }
 
   /* ───────── 사진 (위키백과) ───────── */
   var photoCache = {};
@@ -78,7 +83,7 @@
             ? '<ul class="spot__tickets">' + tk.map(function (t) {
                 return '<li><span class="spot__kind is-' + (t.kind === '체험' ? 'exp' : t.kind === '교통' ? 'ride' : 'in') + '">' + esc(t.kind) + '</span>' +
                   '<b>' + esc(t.name) + '</b><em class="mono">' + won(t.price) + ' / ' + esc(t.unit || '1인') + '</em></li>';
-              }).join('') + '</ul>' +
+              }).join('') + '</ul>' + perkHTML(s) +
               '<button type="button" class="btn spot__buy" data-buy="' + i + '">티켓 구매하기 <span aria-hidden="true">→</span></button>'
             : '<p class="spot__free">별도 티켓 없이 둘러볼 수 있어요. 운영 시간은 현장에서 확인하세요.</p>') +
         '</div></li>';
@@ -125,7 +130,7 @@
     var tk = ticketsFor(stop);
     offerEl.hidden = false;
     offerEl.innerHTML =
-      '<p class="offer__title">이곳의 입장권 · 체험 <small>요금은 예시</small></p>' +
+      '<p class="offer__title">이곳의 입장권 · 체험 <small>요금은 예시</small></p>' + perkHTML(stop) +
       '<ul class="offer__list">' + tk.map(function (t) {
         return '<li><span class="spot__kind is-' + (t.kind === '체험' ? 'exp' : t.kind === '교통' ? 'ride' : 'in') + '">' + esc(t.kind) + '</span>' +
           esc(t.name) + '<b class="mono">' + won(t.price) + '</b></li>';
@@ -250,6 +255,8 @@
     var spot = $('#tkSpot');
     spot.innerHTML = '<figure class="tk__photo"></figure><div><span class="mono">' + esc(course.title) + '</span><b>' + esc(s.name) + '</b></div>';
     getPhoto(s.name).then(function (p) { $('.tk__photo', spot).innerHTML = photoHTML(s, p); });
+    $$('.perk', form).forEach(function (el) { el.remove(); });
+    spot.insertAdjacentHTML('afterend', perkHTML(s));
     renderItems();
     if (location.protocol === 'file:') msgEl.textContent = '파일로 직접 연 페이지에서는 결제 후 돌아올 주소를 만들 수 없어요. 로컬 서버(http://)로 열어주세요.';
     offerSubmitted = false;

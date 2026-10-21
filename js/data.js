@@ -386,7 +386,7 @@ window.TRIP = (function () {
   var NEEDS = [
     {
       id: 'wheel', title: '휠체어 이용자',
-      points: ['열차는 예매할 때 휠체어석을 함께 고르세요', '지역 교통약자 이동지원센터(장애인콜택시)는 미리 예약하세요', '관광지에 휠체어 대여·장애인 화장실이 있는지 전화로 확인하세요']
+      points: ['열차는 예매할 때 휠체어석을 함께 고르세요', '지역 교통약자 이동지원센터(장애인콜택시)는 미리 예약하세요. 배차까지 30분~1시간 걸릴 수 있어요', '관광지에 휠체어 대여·장애인 화장실이 있는지 전화로 확인하세요. 번호를 모르면 관광안내 1330에 물어보세요']
     },
     {
       id: 'walk', title: '보행이 불편한 분 · 고령자',
@@ -456,6 +456,36 @@ window.TRIP = (function () {
     '황리단길': [{ id: 'hrd-hanbok', kind: '체험', name: '한복 대여 2시간', price: 20000 }],
     '반포한강공원': [{ id: 'bp-cruise', kind: '체험', name: '한강 유람선 야경 코스', price: 18000 }]
   };
+  /* 우대 요금 안내 (정류지 이름이 키)
+     free: 공공 관광지라 고령자·장애인이 무료이거나 할인인 경우가 많은 곳 → 결제 전에 먼저 안내한다.
+     기준은 바뀔 수 있으므로 모든 문구는 '방문 전 확인'으로 둔다. */
+  var PUBLIC_PERK = '공공 관광지라 만 65세 이상·장애인은 무료이거나 할인되는 경우가 많아요. 신분증·장애인등록증을 챙겨 매표소에서 확인하세요.';
+  var PRIVATE_PERK = '장애인·경로 할인이 있는지 매표소나 누리집에서 확인하세요. 동반 보호자 할인이 있는 곳도 있어요.';
+  var PERKS = {
+    '경복궁': { free: true, text: '만 65세 이상 내국인, 장애인(중증은 동반 1인 포함), 만 24세 이하는 무료예요. 신분증을 챙기세요(방문 전 확인).' },
+    '동궁과 월지': { free: true, text: PUBLIC_PERK },
+    '성산일출봉': { free: true, text: PUBLIC_PERK },
+    '비자림': { free: true, text: PUBLIC_PERK },
+    '군산 근대역사박물관': { free: true, text: PUBLIC_PERK },
+    '순천만국가정원': { free: true, text: PUBLIC_PERK },
+    '순천만습지': { free: true, text: PUBLIC_PERK },
+    '하회마을': { free: true, text: PUBLIC_PERK },
+    '만천하스카이워크': { free: true, text: PUBLIC_PERK },
+    '오죽헌': { free: true, text: PUBLIC_PERK },
+    '낙안읍성 민속마을': { free: true, text: PUBLIC_PERK },
+    '국립세종수목원': { free: true, text: PUBLIC_PERK },
+    '서울식물원': { free: true, text: PUBLIC_PERK },
+    '남이섬': { text: PRIVATE_PERK }, '가평 나루': { text: PRIVATE_PERK }, '한림공원': { text: PRIVATE_PERK },
+    'N서울타워': { text: PRIVATE_PERK }, '해운대 블루라인파크': { text: PRIVATE_PERK }, '블루라인파크 미포정거장': { text: PRIVATE_PERK },
+    '월미바다역': { text: PRIVATE_PERK }, '반포한강공원': { text: PRIVATE_PERK }
+  };
+  /* 여행 중 문의처 (전국 공통, 가이드 인쇄용). index.html의 .help 목록과 같은 내용으로 맞춘다.
+     지역 콜택시 번호는 지역마다 달라 1330에서 안내받도록 한다. */
+  var HELP = [
+    { label: '관광안내 전화', value: '1330', href: 'tel:1330', note: '24시간 · 시설·교통·통역 안내, 지역 콜택시 번호도 알려줘요' },
+    { label: '서울 장애인콜택시', value: '1588-4388', href: 'tel:15884388', note: '서울 출발 · 미리 예약' },
+    { label: '열린관광 모두의 여행', value: 'access.visitkorea.or.kr', href: 'https://access.visitkorea.or.kr/', note: '한국관광공사 무장애 시설 정보' }
+  ];
   // 위키백과 사진 검색어 (정류지 이름과 문서 제목이 다를 때). null이면 사진 대신 그림을 보여준다.
   var WIKI = {
     '광안리 해변': '광안리해수욕장', '순천만습지': '순천만', '여수 오동도': '오동도', '경포호 산책로': '경포호',
@@ -464,5 +494,5 @@ window.TRIP = (function () {
     '안동 찜닭골목': '안동찜닭', '대전 성심당 본점': '성심당', '김광석다시그리기길': null, '양양 서피비치': null
   };
 
-  return { ORIGINS: ORIGINS, STATIONS: STATIONS, TICKETS: TICKETS, WIKI: WIKI, GROUPS: GROUPS, COURSES: COURSES, NEEDS: NEEDS, LAND: LAND, JEJU: JEJU, CITIES: CITIES, HIGHWAYS: HIGHWAYS };
+  return { ORIGINS: ORIGINS, STATIONS: STATIONS, TICKETS: TICKETS, PERKS: PERKS, HELP: HELP, WIKI: WIKI, GROUPS: GROUPS, COURSES: COURSES, NEEDS: NEEDS, LAND: LAND, JEJU: JEJU, CITIES: CITIES, HIGHWAYS: HIGHWAYS };
 })();
