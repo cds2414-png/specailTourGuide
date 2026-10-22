@@ -2,3 +2,7 @@
 .env
 .env.*
 !.env.example
+
+# Python 가상환경 (챗봇 색인 도구)
+.venv/
+__pycache__/

@@ -1,0 +1,7 @@
+# 챗봇 색인 도구(tools/build_chat_index.py) 의존성. pyenv 3.11.9(.python-version) 가상환경에 설치한다:
+#   pyenv install 3.11.9  (없을 때)
+#   %USERPROFILE%\.pyenv\pyenv-win\versions\3.11.9\python -m venv .venv
+#   .venv\Scripts\python -m pip install -r tools\requirements.txt
+langchain-text-splitters==1.1.3
+langchain-upstage==0.7.7
+python-dotenv==1.2.4

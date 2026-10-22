@@ -4,7 +4,7 @@
 // 질문 임베딩은 색인을 만든 제공자를 따른다(provider가 없는 예전 색인은 OpenAI text-embedding-3-small).
 // 환경 변수: UPSTAGE_API_KEY(Upstage 색인일 때 필수), OPENAI_API_KEY(필수, 답변. 예전 이름 OPEN_AI_API도 읽음), OPENAI_MODEL(선택)
 let INDEX = null;
-try { INDEX = require('./_chat-index.json'); } catch (e) { /* 색인을 아직 만들지 않음: node tools/gen-chat-index.js */ }
+try { INDEX = require('./_chat-index.json'); } catch (e) { /* 색인을 아직 만들지 않음: .venv/Scripts/python tools/build_chat_index.py */ }
 
 const TOP_K = 5;
 const MAX_Q = 300;

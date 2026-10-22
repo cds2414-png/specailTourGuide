@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 이름은 2026-10 「느린지도 SLOW MAP」에서 바꿨다. 내부 이름(`slowmap.*` 저장소 키, `slowmap:*` 이벤트, `Slow*` 전역 객체)은 사용자 데이터 호환을 위해 그대로 둔다.
 
-**퍼블리싱 전용**: 순수 HTML/CSS/JS만 쓴다. 프레임워크·번들러·npm 패키지·JS 라이브러리를 추가하지 않는다. 빌드·린트·테스트 단계가 없다. 서버 코드는 Q&A 챗봇용 Vercel 함수 `api/chat.js` 하나뿐이고, 계정·리뷰·리뷰로 만든 코스·티켓은 모두 브라우저 `localStorage`에 저장되는 **데모 기능**이다. 외부 리소스는 Google Fonts, 토스페이먼츠 SDK(`js.tosspayments.com/v2/standard`, 결제할 때만 동적 로드), 위키백과 REST API(목적지 사진)뿐이다.
+**퍼블리싱 전용**: 순수 HTML/CSS/JS만 쓴다. 프레임워크·번들러·npm 패키지·JS 라이브러리를 추가하지 않는다. 빌드·린트·테스트 단계가 없다(챗봇 색인만 로컬 Python 도구로 미리 만든다). 서버 코드는 Q&A 챗봇용 Vercel 함수 `api/chat.js` 하나뿐이고, 계정·리뷰·리뷰로 만든 코스·티켓은 모두 브라우저 `localStorage`에 저장되는 **데모 기능**이다. 외부 리소스는 Google Fonts, 토스페이먼츠 SDK(`js.tosspayments.com/v2/standard`, 결제할 때만 동적 로드), 위키백과 REST API(목적지 사진)뿐이다.
 
 ## 실행 · 검증
 
@@ -91,7 +91,8 @@ node tools/dev-server.js 5600
 ## Q&A 챗봇 (`js/chat.js` · `api/chat.js`)
 
 - 메뉴 `05 Q&A 챗봇`(`#chat`). 사이트 내용만 근거로 답하고, 답 아래에 근거 청크 상위 5개의 페이지 링크(`#ages` 등)·코사인 유사도(%)·코스면 「내비로 달려보기」(`data-go`)를 보여준다.
-- 색인: `node tools/gen-chat-index.js`가 `js/data.js`·`tools/faq.js`·화면 소개 문구를 청크로 나눠(최대 약 520자, 앞 청크 끝 약 18%를 다음 청크 앞에 겹침) `assets/chat-docs.json`(글만)과 `api/_chat-index.json`(Upstage Solar 문서용 `embedding-passage` 4096차원, 정규화, 약 3MB)을 만든다. **데이터·FAQ·화면 문구를 바꾸면 다시 실행한다.** 키는 `.env`의 `UPSTAGE_API_KEY`. `--dry`는 임베딩 없이 청크만 출력한다. 화면 소개 문구는 이 스크립트에 따로 적혀 있으니 `index.html`의 소개 문구를 고치면 함께 고친다.
+- 색인(**Python + LangChain, pyenv로 격리**): `.venv\Scripts\python tools\build_chat_index.py`가 `js/data.js`·`tools/faq.js`(node로 JSON을 받아 읽음)·화면 소개 문구를 LangChain `RecursiveCharacterTextSplitter`로 나눈다. 청크 300자, **이웃 청크와 앞뒤 15%(45자) 중복**(규칙: 10~20%), 낱말 단위로 잘라 겹침이 글자 수대로 생긴다. 새 내용이 90자 미만인 꼬리 청크는 앞 청크에 합친다. 결과는 `assets/chat-docs.json`(글만)과 `api/_chat-index.json`(Upstage Solar 문서용 `embedding-passage` 4096차원, 정규화, 약 3MB). **데이터·FAQ·화면 문구를 바꾸면 다시 실행한다.** 키는 `.env`의 `UPSTAGE_API_KEY`. `--dry`는 임베딩 없이 청크와 쌍별 중복률만 출력한다. 화면 소개 문구는 이 스크립트에 따로 적혀 있으니 `index.html`의 소개 문구를 고치면 함께 고친다.
+- Python 환경: pyenv(pyenv-win) 3.11.9(`.python-version`) → `.venv`(git·배포 제외). 처음 한 번 `%USERPROFILE%\.pyenv\pyenv-win\versions\3.11.9\python -m venv .venv` 후 `.venv\Scripts\python -m pip install -r tools\requirements.txt`. 사이트·배포는 Python에 의존하지 않는다.
 - `api/chat.js`(Vercel Node 함수, 의존성 없음): 질문을 Upstage 질문용 `embedding-query`로 임베딩 → 코사인 Top-5 → OpenAI `OPENAI_MODEL`(기본 `gpt-4o-mini`)이 자료 안에서만 해요체로 답한다. 키(`UPSTAGE_API_KEY`, `OPENAI_API_KEY` — 예전 이름 `OPEN_AI_API`도 읽음)·모델은 Vercel 환경 변수로 넣는다. 색인과 질문 벡터 차원이 다르면 503 `index_mismatch`. 질문 임베딩은 색인의 `provider`를 따른다(`upstage`가 아니면 OpenAI 임베딩, 이때는 Upstage 키가 없어도 동작). 인스턴스 메모리 기준 IP당 1분 20회 제한, 질문 300자. 추론형 모델(`gpt-5`·`o` 계열)은 `reasoning_effort: low`, 한도 4000토큰으로 부른다(아니면 추론에 한도를 다 써 본문이 빈다).
 - API가 실패하면(키 없음 503 `no_key`, 색인 없음 503 `no_index`, 한도 초과, 오프라인) 브라우저가 `assets/chat-docs.json`을 글자 2-gram 벡터 코사인 유사도로 검색해 가장 비슷한 청크를 「사이트 검색」 답으로 보여준다.
 - `tools/faq.js`는 화면 FAQ·FAQPage·챗봇 색인이 함께 쓰는 FAQ 원본이다.
@@ -116,7 +117,7 @@ node tools/dev-server.js 5600
 ## SEO · AEO · GEO
 
 - 배포 주소는 `https://specialtourguide.vercel.app/`(Vercel). canonical·OG·sitemap·robots·JSON-LD가 이 절대 주소를 쓴다. 주소가 바뀌면 `index.html`, `robots.txt`, `sitemap.xml`, `tools/gen-seo.js`의 `SITE`를 함께 바꾼다.
-- `index.html`의 `<!-- seo:jsonld -->`(Organization·WebSite·WebApplication·코스 ItemList·FAQPage), `<!-- seo:faq -->`(홈 화면 FAQ 섹션 `#faq`), `<!-- seo:courses -->`(`<noscript>` 코스 요약)와 `llms.txt`는 **생성된 블록**이다. 손으로 고치지 말고 `js/data.js`나 `tools/faq.js`를 고친 뒤 `node tools/gen-seo.js`(챗봇 색인은 `node tools/gen-chat-index.js`)로 다시 만든다(Node는 이 작업에만 쓰고 사이트는 Node에 의존하지 않는다). 화면 FAQ와 FAQPage 구조화 데이터는 같은 문구여야 한다.
+- `index.html`의 `<!-- seo:jsonld -->`(Organization·WebSite·WebApplication·코스 ItemList·FAQPage), `<!-- seo:faq -->`(홈 화면 FAQ 섹션 `#faq`), `<!-- seo:courses -->`(`<noscript>` 코스 요약)와 `llms.txt`는 **생성된 블록**이다. 손으로 고치지 말고 `js/data.js`나 `tools/faq.js`를 고친 뒤 `node tools/gen-seo.js`(챗봇 색인은 `.venvScriptspython toolsbuild_chat_index.py`)로 다시 만든다(Node는 이 작업에만 쓰고 사이트는 Node에 의존하지 않는다). 화면 FAQ와 FAQPage 구조화 데이터는 같은 문구여야 한다.
 - `robots.txt`는 생성형 AI 검색 봇을 허용하고 `/pay/`만 막는다. 결제 결과 페이지는 `noindex`.
 - `google68425b399eea28fe.html`은 Google Search Console(URL 접두어 속성) 소유권 확인 파일이다. 지우면 인증이 풀리므로 남겨 둔다. 기존 속성은 오타 주소로 등록되어 있어 정식 주소 속성을 새로 추가해야 한다(같은 파일로 인증).
 - Search Console 사이트맵 입력란은 자동 완성 값이 미리 들어갈 수 있다. 제출 전에 입력값을 확인한다(잘못 제출된 `/sitemap.htmlsitemap.xml` 항목이 남아 있음).

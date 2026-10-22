@@ -4,3 +4,5 @@ tools/
 .env
 .env.*
 .gitignore
+.venv/
+.python-version
