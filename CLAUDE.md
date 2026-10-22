@@ -24,10 +24,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ../.claude/serve.ps1 -Root .
 node tools/dev-server.js 5600
 ```
 
+생성물 다시 만들기(데이터·FAQ·화면 문구를 바꾼 뒤):
+
+```bash
+node tools/gen-seo.js                                  # index.html SEO 블록 + llms.txt
+.venv/Scripts/python tools/build_chat_index.py --dry   # 챗봇 청크·중복률만 확인
+.venv/Scripts/python tools/build_chat_index.py         # 챗봇 색인 생성 (UPSTAGE_API_KEY 필요)
+```
+
 - 배포: `main`에 푸시하면 Vercel(`https://specialtourguide.vercel.app/`)이 자동 배포한다(보통 1분 안). 반영 여부는 `curl`로 바뀐 파일을 받아 확인한다. GitHub Pages는 쓰지 않는다.
 - 예전 오타 주소 `specailtourguide.vercel.app`은 정식 주소로 307 리다이렉트된다. 문서·코드에는 정식 주소만 쓴다.
 - `vercel.json`이 보안 헤더(nosniff, `X-Frame-Options: DENY`, Referrer-Policy, Permissions-Policy, 최소 CSP)를 붙인다. 전체 CSP는 아직 `Content-Security-Policy-Report-Only`다. 토스 결제창을 끝까지 시험해 콘솔에 위반이 없으면 강제 적용으로 바꾼다. 외부 출처를 추가하면 CSP도 함께 고친다.
-- `.vercelignore`로 `CLAUDE.md`와 `tools/`는 배포하지 않는다.
+- `.vercelignore`로 `CLAUDE.md`, `tools/`, `.env*`, `.venv/`, `.python-version`은 배포하지 않는다. `api/_chat-index.json`처럼 `_`로 시작하는 `api/` 파일은 함수가 되지 않고 외부에서도 열리지 않는다(404).
 - 같은 주소에서 `#해시`만 바꾸면 새로 로드되지 않는다. 수정 확인 때는 `?r=2` 같은 쿼리를 붙인다.
 - 시뮬레이터·연출은 rAF 루프에 의존한다. 브라우저 창이 숨겨지면 rAF가 완전히 멈춰 시뮬레이션이 진행되지 않는다. 진행이 필요한 테스트는 창을 보이게 하거나, 이벤트(`slowmap:progress` 등)를 직접 보내 로직을 확인한다. `document.open()`으로 페이지를 다시 쓰면 window가 재사용되어 이전 스크립트 인스턴스가 함께 남으므로 그 방식으로 테스트하지 않는다.
 - 데스크톱(1440)과 모바일(375)을 모두 확인한다. 뷰포트 에뮬레이션 중에는 iframe(토스 결제창) 안 클릭 좌표가 어긋난다.
@@ -45,7 +53,6 @@ node tools/dev-server.js 5600
 6. `js/fx.js` — 프리로더·등고선 히어로·마키·스크롤 장면(자체 rAF 루프).
 7. `js/explore.js` → `SlowExplore` — 목적지 둘러보기(사진·티켓), 도착지 티켓 제안, 토스페이먼츠 결제.
 8. `js/guide.js` → `SlowGuide` — 여행 가이드 A4 미리보기·인쇄.
-
 9. `js/chat.js` → `SlowChat` — Q&A 챗봇 화면(아래 「Q&A 챗봇」).
 
 `pay/success.html`, `pay/fail.html`은 `js/pay.js`만 쓰는 별도 페이지다.
@@ -117,7 +124,7 @@ node tools/dev-server.js 5600
 ## SEO · AEO · GEO
 
 - 배포 주소는 `https://specialtourguide.vercel.app/`(Vercel). canonical·OG·sitemap·robots·JSON-LD가 이 절대 주소를 쓴다. 주소가 바뀌면 `index.html`, `robots.txt`, `sitemap.xml`, `tools/gen-seo.js`의 `SITE`를 함께 바꾼다.
-- `index.html`의 `<!-- seo:jsonld -->`(Organization·WebSite·WebApplication·코스 ItemList·FAQPage), `<!-- seo:faq -->`(홈 화면 FAQ 섹션 `#faq`), `<!-- seo:courses -->`(`<noscript>` 코스 요약)와 `llms.txt`는 **생성된 블록**이다. 손으로 고치지 말고 `js/data.js`나 `tools/faq.js`를 고친 뒤 `node tools/gen-seo.js`(챗봇 색인은 `.venvScriptspython toolsbuild_chat_index.py`)로 다시 만든다(Node는 이 작업에만 쓰고 사이트는 Node에 의존하지 않는다). 화면 FAQ와 FAQPage 구조화 데이터는 같은 문구여야 한다.
+- `index.html`의 `<!-- seo:jsonld -->`(Organization·WebSite·WebApplication·코스 ItemList·FAQPage), `<!-- seo:faq -->`(홈 화면 FAQ 섹션 `#faq`), `<!-- seo:courses -->`(`<noscript>` 코스 요약)와 `llms.txt`는 **생성된 블록**이다. 손으로 고치지 말고 `js/data.js`나 `tools/faq.js`를 고친 뒤 `node tools/gen-seo.js`(챗봇 색인은 `.venv/Scripts/python tools/build_chat_index.py`)로 다시 만든다(Node는 이 작업에만 쓰고 사이트는 Node에 의존하지 않는다). 화면 FAQ와 FAQPage 구조화 데이터는 같은 문구여야 한다.
 - `robots.txt`는 생성형 AI 검색 봇을 허용하고 `/pay/`만 막는다. 결제 결과 페이지는 `noindex`.
 - `google68425b399eea28fe.html`은 Google Search Console(URL 접두어 속성) 소유권 확인 파일이다. 지우면 인증이 풀리므로 남겨 둔다. 기존 속성은 오타 주소로 등록되어 있어 정식 주소 속성을 새로 추가해야 한다(같은 파일로 인증).
 - Search Console 사이트맵 입력란은 자동 완성 값이 미리 들어갈 수 있다. 제출 전에 입력값을 확인한다(잘못 제출된 `/sitemap.htmlsitemap.xml` 항목이 남아 있음).

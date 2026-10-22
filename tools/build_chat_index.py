@@ -195,6 +195,7 @@ def embed(texts):
 
 
 def main():
+    sys.stdout.reconfigure(encoding="utf-8")  # Windows 콘솔 기본 cp949는 ≈·↔ 같은 글자를 못 찍는다
     load_dotenv(ROOT / ".env")
     T, FAQ = load_site_data()
     build_docs(T, FAQ)
