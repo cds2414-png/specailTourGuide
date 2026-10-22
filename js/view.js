@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  var VIEWS = ['top', 'ages', 'access', 'sim', 'reviews'];
+  var VIEWS = ['top', 'ages', 'access', 'sim', 'reviews', 'chat'];
   var current = null;
 
   function viewFor(hash) {

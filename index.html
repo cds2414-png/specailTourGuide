@@ -68,6 +68,7 @@
       <a href="#access" data-nav="access"><i class="mono">02</i><span>무장애 여행<small>계단 없는 여행</small></span></a>
       <a href="#sim" data-nav="sim"><i class="mono">03</i><span>내비 시뮬레이터<small>출발부터 도착까지</small></span></a>
       <a href="#reviews" data-nav="reviews"><i class="mono">04</i><span>여행 리뷰<small>다녀온 사람들의 후기</small></span></a>
+      <a href="#chat" data-nav="chat"><i class="mono">05</i><span>Q&amp;A 챗봇<small>사이트에 대해 물어보기</small></span></a>
     </nav>
     <div class="nav__right">
       <button class="textsize" id="textSize" type="button" aria-pressed="false" title="글자 크게 보기">가<sup>+</sup><span class="sr">글자 크게</span></button>
@@ -93,6 +94,7 @@
     <a href="#access" data-nav="access"><i class="mono">02</i>무장애 여행</a>
     <a href="#sim" data-nav="sim"><i class="mono">03</i>내비 시뮬레이터</a>
     <a href="#reviews" data-nav="reviews"><i class="mono">04</i>여행 리뷰</a>
+    <a href="#chat" data-nav="chat"><i class="mono">05</i>Q&amp;A 챗봇</a>
     <div class="mnav__auth" id="mnavAuth"></div>
   </div>
 
@@ -433,6 +435,36 @@
         <div class="cards cards--3" id="bornCards"></div>
       </div>
     </section>
+
+    <!-- Q&A 챗봇 (js/chat.js, 서버리스 함수 api/chat.js) -->
+    <section class="chatsec" id="chat" aria-labelledby="chatTitle" data-view="chat">
+      <div class="section-head">
+        <p class="eyebrow mono reveal">(05) — Q&amp;A 챗봇</p>
+        <h2 id="chatTitle" class="reveal">궁금한 건<br><em>물어보세요</em></h2>
+        <p class="reveal">코스, 무장애 준비, 내비 시뮬레이터 사용법까지 이 사이트에 적힌 내용 안에서 답해요. 답마다 근거가 된 페이지와 유사도를 함께 보여드려요.</p>
+      </div>
+
+      <div class="chat">
+        <ol class="chat__log" id="chatLog" aria-live="polite" aria-label="대화 내용">
+          <li class="msg msg--bot">
+            <p class="msg__who mono">ROUTE FOR ALL · 안내</p>
+            <div class="msg__body"><p>안녕하세요. 모두의 여행길 안내 챗봇이에요. 나이나 몸 상태, 가고 싶은 지역을 말씀해 주시면 맞는 코스와 준비할 것을 찾아드려요.</p></div>
+          </li>
+        </ol>
+        <div class="chat__suggest" id="chatSuggest" role="group" aria-label="추천 질문">
+          <button type="button" data-ask>70대 부모님과 가기 좋은 코스가 있나요?</button>
+          <button type="button" data-ask>휠체어로 갈 수 있는 서울 코스 알려주세요</button>
+          <button type="button" data-ask>내비 시뮬레이터는 어떻게 쓰나요?</button>
+          <button type="button" data-ask>여행 중 도움이 필요하면 어디로 연락하나요?</button>
+        </div>
+        <form class="chat__form" id="chatForm" autocomplete="off">
+          <label for="chatInput" class="sr">질문</label>
+          <textarea id="chatInput" rows="1" maxlength="300" placeholder="예: 유모차로 가기 좋은 바다 코스가 있나요?" required></textarea>
+          <button type="submit" class="btn btn--play chat__send" id="chatSend">묻기 <span aria-hidden="true">→</span></button>
+        </form>
+        <p class="chat__note">AI가 사이트 내용을 바탕으로 만든 답이라 틀릴 수 있어요. 요금은 예시이고, 운영 시간·편의시설은 방문 전 각 시설에 확인하세요. 질문은 답변 생성을 위해 OpenAI로 전송되며 저장하지 않아요.</p>
+      </div>
+    </section>
   </main>
 
   <!-- 로그인 · 회원가입 -->
@@ -574,6 +606,7 @@
         <a href="#access">무장애 여행</a>
         <a href="#sim">내비 시뮬레이터</a>
         <a href="#reviews">여행 리뷰</a>
+        <a href="#chat">Q&amp;A 챗봇</a>
         <a href="#top">홈으로</a>
       </nav>
     </div>
@@ -600,5 +633,6 @@
   <script src="js/fx.js"></script>
   <script src="js/explore.js"></script>
   <script src="js/guide.js"></script>
+  <script src="js/chat.js"></script>
 </body>
 </html>

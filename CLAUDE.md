@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 이름은 2026-10 「느린지도 SLOW MAP」에서 바꿨다. 내부 이름(`slowmap.*` 저장소 키, `slowmap:*` 이벤트, `Slow*` 전역 객체)은 사용자 데이터 호환을 위해 그대로 둔다.
 
-**퍼블리싱 전용**: 순수 HTML/CSS/JS만 쓴다. 프레임워크·번들러·npm 패키지·JS 라이브러리를 추가하지 않는다. 빌드·린트·테스트 단계가 없다. 서버 코드가 없으므로 계정·리뷰·리뷰로 만든 코스·티켓은 모두 브라우저 `localStorage`에 저장되는 **데모 기능**이다. 외부 리소스는 Google Fonts, 토스페이먼츠 SDK(`js.tosspayments.com/v2/standard`, 결제할 때만 동적 로드), 위키백과 REST API(목적지 사진)뿐이다.
+**퍼블리싱 전용**: 순수 HTML/CSS/JS만 쓴다. 프레임워크·번들러·npm 패키지·JS 라이브러리를 추가하지 않는다. 빌드·린트·테스트 단계가 없다. 서버 코드는 Q&A 챗봇용 Vercel 함수 `api/chat.js` 하나뿐이고, 계정·리뷰·리뷰로 만든 코스·티켓은 모두 브라우저 `localStorage`에 저장되는 **데모 기능**이다. 외부 리소스는 Google Fonts, 토스페이먼츠 SDK(`js.tosspayments.com/v2/standard`, 결제할 때만 동적 로드), 위키백과 REST API(목적지 사진)뿐이다.
 
 ## 실행 · 검증
 
@@ -16,6 +16,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 powershell -NoProfile -ExecutionPolicy Bypass -File ../.claude/serve.ps1 -Root .. -Port 5500
+```
+
+챗봇(`/api/chat`)까지 시험하려면 Node 개발 서버를 쓴다. 정적 파일과 `api/*.js`를 함께 띄우고 `.env`의 `OPENAI_*`·`UPSTAGE_*` 값을 넘긴다(.env를 고치면 서버를 다시 띄운다). 주소는 `http://localhost:5600/`.
+
+```bash
+node tools/dev-server.js 5600
 ```
 
 - 배포: `main`에 푸시하면 Vercel(`https://specialtourguide.vercel.app/`)이 자동 배포한다(보통 1분 안). 반영 여부는 `curl`로 바뀐 파일을 받아 확인한다. GitHub Pages는 쓰지 않는다.
@@ -40,11 +46,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ../.claude/serve.ps1 -Root .
 7. `js/explore.js` → `SlowExplore` — 목적지 둘러보기(사진·티켓), 도착지 티켓 제안, 토스페이먼츠 결제.
 8. `js/guide.js` → `SlowGuide` — 여행 가이드 A4 미리보기·인쇄.
 
+9. `js/chat.js` → `SlowChat` — Q&A 챗봇 화면(아래 「Q&A 챗봇」).
+
 `pay/success.html`, `pay/fail.html`은 `js/pay.js`만 쓰는 별도 페이지다.
 
 ## 화면 전환 (`view.js`)
 
-- 섹션마다 `data-view`(`top`·`ages`·`access`·`sim`·`reviews`), 상단 메뉴 링크에 `data-nav`. 선택한 화면만 보이고 나머지는 `hidden`. 주소 해시와 뒤로 가기를 따른다.
+- 섹션마다 `data-view`(`top`·`ages`·`access`·`sim`·`reviews`·`chat`), 상단 메뉴 링크에 `data-nav`. 선택한 화면만 보이고 나머지는 `hidden`. 주소 해시와 뒤로 가기를 따른다.
 - 다른 화면으로 이어지는 클릭은 **캡처 단계**에서 먼저 화면을 바꾼다: `[data-go]`→sim, `[data-rating]`·`[data-born]`·`[data-my-reviews]`→reviews, `[data-hero-group]`→ages. 새 진입 버튼을 만들면 여기에 추가한다.
 - 숨겨진 화면의 캔버스는 크기가 0이다. 화면을 바꾸면 `slowmap:layout`, `slowmap:view` 이벤트가 나가고 app.js·fx.js가 크기를 다시 잡는다.
 
@@ -80,6 +88,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ../.claude/serve.ps1 -Root .
 
 `explore.js`의 `TOSS.CLIENT_KEY`는 토스 문서용 공개 테스트 키다. 주문번호·금액을 프런트에서 만들어 `sessionStorage`의 `slowmap.pendingOrder`에 두고, `pay/success.html`이 리다이렉트 금액과 대조한 뒤 티켓을 `slowmap.tickets`에 저장한다. 시크릿 키가 필요한 **결제 승인 API는 호출하지 않는다**(상태는 「결제 인증 완료」). 실제 승인은 서버 연동이 필요하며, 시크릿 키를 클라이언트 코드에 넣지 않는다. SDK 사용법(v2 결제창형: `widgets` → `setAmount` → `renderPaymentWindow` → `paymentRequest` 이벤트에서 `requestPayment`)은 토스페이먼츠 연동 문서 MCP(`@tosspayments/integration-guide-mcp`)로 확인한다.
 
+## Q&A 챗봇 (`js/chat.js` · `api/chat.js`)
+
+- 메뉴 `05 Q&A 챗봇`(`#chat`). 사이트 내용만 근거로 답하고, 답 아래에 근거 청크 상위 5개의 페이지 링크(`#ages` 등)·코사인 유사도(%)·코스면 「내비로 달려보기」(`data-go`)를 보여준다.
+- 색인: `node tools/gen-chat-index.js`가 `js/data.js`·`tools/faq.js`·화면 소개 문구를 청크로 나눠(최대 약 520자, 앞 청크 끝 약 18%를 다음 청크 앞에 겹침) `assets/chat-docs.json`(글만)과 `api/_chat-index.json`(Upstage Solar 문서용 `embedding-passage` 4096차원, 정규화, 약 3MB)을 만든다. **데이터·FAQ·화면 문구를 바꾸면 다시 실행한다.** 키는 `.env`의 `UPSTAGE_API_KEY`. `--dry`는 임베딩 없이 청크만 출력한다. 화면 소개 문구는 이 스크립트에 따로 적혀 있으니 `index.html`의 소개 문구를 고치면 함께 고친다.
+- `api/chat.js`(Vercel Node 함수, 의존성 없음): 질문을 Upstage 질문용 `embedding-query`로 임베딩 → 코사인 Top-5 → OpenAI `OPENAI_MODEL`(기본 `gpt-4o-mini`)이 자료 안에서만 해요체로 답한다. 키(`UPSTAGE_API_KEY`, `OPENAI_API_KEY` — 예전 이름 `OPEN_AI_API`도 읽음)·모델은 Vercel 환경 변수로 넣는다. 색인과 질문 벡터 차원이 다르면 503 `index_mismatch`. 질문 임베딩은 색인의 `provider`를 따른다(`upstage`가 아니면 OpenAI 임베딩, 이때는 Upstage 키가 없어도 동작). 인스턴스 메모리 기준 IP당 1분 20회 제한, 질문 300자. 추론형 모델(`gpt-5`·`o` 계열)은 `reasoning_effort: low`, 한도 4000토큰으로 부른다(아니면 추론에 한도를 다 써 본문이 빈다).
+- API가 실패하면(키 없음 503 `no_key`, 색인 없음 503 `no_index`, 한도 초과, 오프라인) 브라우저가 `assets/chat-docs.json`을 글자 2-gram 벡터 코사인 유사도로 검색해 가장 비슷한 청크를 「사이트 검색」 답으로 보여준다.
+- `tools/faq.js`는 화면 FAQ·FAQPage·챗봇 색인이 함께 쓰는 FAQ 원본이다.
+
 ## 가이드 출력 (`js/guide.js`)
 
 `SlowApp.guideData()`와 `routeImage()`로 현재 코스·출발지·이동 수단을 A4 문서로 엮어 `#printView`(`<dialog class="pv">`)에 미리 보여주고 `window.print()`로 인쇄한다. 출발지에서 먼 이동이 있으면 전체 경로와 목적지 주변 확대 지도 두 장을 넣는다. 인쇄 CSS는 `body.is-printing`일 때 `#printView`만 출력한다.
@@ -100,7 +116,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ../.claude/serve.ps1 -Root .
 ## SEO · AEO · GEO
 
 - 배포 주소는 `https://specialtourguide.vercel.app/`(Vercel). canonical·OG·sitemap·robots·JSON-LD가 이 절대 주소를 쓴다. 주소가 바뀌면 `index.html`, `robots.txt`, `sitemap.xml`, `tools/gen-seo.js`의 `SITE`를 함께 바꾼다.
-- `index.html`의 `<!-- seo:jsonld -->`(Organization·WebSite·WebApplication·코스 ItemList·FAQPage), `<!-- seo:faq -->`(홈 화면 FAQ 섹션 `#faq`), `<!-- seo:courses -->`(`<noscript>` 코스 요약)와 `llms.txt`는 **생성된 블록**이다. 손으로 고치지 말고 `js/data.js`나 `tools/gen-seo.js`의 `FAQ`를 고친 뒤 `node tools/gen-seo.js`로 다시 만든다(Node는 이 작업에만 쓰고 사이트는 Node에 의존하지 않는다). 화면 FAQ와 FAQPage 구조화 데이터는 같은 문구여야 한다.
+- `index.html`의 `<!-- seo:jsonld -->`(Organization·WebSite·WebApplication·코스 ItemList·FAQPage), `<!-- seo:faq -->`(홈 화면 FAQ 섹션 `#faq`), `<!-- seo:courses -->`(`<noscript>` 코스 요약)와 `llms.txt`는 **생성된 블록**이다. 손으로 고치지 말고 `js/data.js`나 `tools/faq.js`를 고친 뒤 `node tools/gen-seo.js`(챗봇 색인은 `node tools/gen-chat-index.js`)로 다시 만든다(Node는 이 작업에만 쓰고 사이트는 Node에 의존하지 않는다). 화면 FAQ와 FAQPage 구조화 데이터는 같은 문구여야 한다.
 - `robots.txt`는 생성형 AI 검색 봇을 허용하고 `/pay/`만 막는다. 결제 결과 페이지는 `noindex`.
 - `google68425b399eea28fe.html`은 Google Search Console(URL 접두어 속성) 소유권 확인 파일이다. 지우면 인증이 풀리므로 남겨 둔다. 기존 속성은 오타 주소로 등록되어 있어 정식 주소 속성을 새로 추가해야 한다(같은 파일로 인증).
 - Search Console 사이트맵 입력란은 자동 완성 값이 미리 들어갈 수 있다. 제출 전에 입력값을 확인한다(잘못 제출된 `/sitemap.htmlsitemap.xml` 항목이 남아 있음).

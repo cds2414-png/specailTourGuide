@@ -15,6 +15,7 @@
 - [무장애 여행](https://specialtourguide.vercel.app/#access): 휠체어·보행 불편·유모차 동반 코스와 준비 팁
 - [내비 시뮬레이터](https://specialtourguide.vercel.app/#sim): 출발지·이동 수단을 고르고 경로를 미리 달려보기, A4 가이드 인쇄
 - [여행 리뷰](https://specialtourguide.vercel.app/#reviews): 후기와 리뷰에서 만들어진 코스
+- [Q&A 챗봇](https://specialtourguide.vercel.app/#chat): 사이트 내용을 근거로 코스·무장애 준비·사용법을 답하는 챗봇 (근거 페이지와 유사도 표시)
 
 ## 연령별 준비 팁
 
