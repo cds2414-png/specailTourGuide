@@ -1,3 +1,6 @@
 # 배포하지 않는 파일 (내부 문서·생성 도구)
 CLAUDE.md
 tools/
+.env
+.env.*
+.gitignore
